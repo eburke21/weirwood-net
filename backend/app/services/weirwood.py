@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 from collections.abc import AsyncGenerator
@@ -9,10 +10,15 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.config import settings
 from app.errors import NotFoundError
-from app.models import Prophecy, Connection, ConnectionType
+from app.models import Prophecy, Connection, ConnectionType, AnalysisCache, AnalysisType, Event
 from app.services.prompts import (
     CONNECTION_FINDER_SYSTEM,
     build_connection_finder_prompt,
+    build_fulfillment_prompt,
+    FULFILLMENT_SYSTEM,
+    build_prediction_single_prompt,
+    PREDICTION_SYSTEM,
+    build_prediction_global_prompt,
 )
 from app.services.streaming import sse_event
 
@@ -23,6 +29,45 @@ VALID_CONNECTION_TYPES = {t.value for t in ConnectionType}
 
 def _get_client() -> anthropic.AsyncAnthropic:
     return anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+
+def compute_input_hash(analysis_type: str, input_data: str) -> str:
+    return hashlib.sha256(f"{analysis_type}:{input_data}".encode()).hexdigest()
+
+
+async def get_cached_analysis(analysis_type: str, input_hash: str, session: AsyncSession) -> AnalysisCache | None:
+    result = await session.exec(
+        select(AnalysisCache).where(
+            AnalysisCache.analysis_type == analysis_type,
+            AnalysisCache.input_hash == input_hash,
+        )
+    )
+    return result.first()
+
+
+async def store_analysis(
+    analysis_type: str,
+    input_hash: str,
+    input_summary: str,
+    result_json: str,
+    model_version: str,
+    session: AsyncSession,
+) -> None:
+    existing = await get_cached_analysis(analysis_type, input_hash, session)
+    if existing:
+        existing.result_json = result_json
+        existing.model_version = model_version
+        session.add(existing)
+    else:
+        cache_entry = AnalysisCache(
+            analysis_type=analysis_type,
+            input_hash=input_hash,
+            input_summary=input_summary,
+            result_json=result_json,
+            model_version=model_version,
+        )
+        session.add(cache_entry)
+    await session.commit()
 
 
 async def get_cached_connections(prophecy_id: int, session: AsyncSession) -> list[dict]:
@@ -170,3 +215,237 @@ async def find_connections(prophecy_id: int, session: AsyncSession) -> AsyncGene
         "total_connections": persisted_count,
         "persisted": True,
     })
+
+
+# --- Fulfillment Analyzer ---
+
+def _sanitize_input(text: str) -> str:
+    import re
+    text = re.sub(r"<[^>]+>", "", text)  # Strip HTML tags
+    return text[:500].strip()
+
+
+async def analyze_fulfillment(
+    event_description: str | None,
+    event_id: int | None,
+    session: AsyncSession,
+) -> AsyncGenerator:
+    # Resolve event description
+    if event_id is not None:
+        event = await session.get(Event, event_id)
+        if event is None:
+            raise NotFoundError(f"Event with id {event_id} not found")
+        description = event.description
+        summary = event.title
+    elif event_description:
+        description = _sanitize_input(event_description)
+        summary = description[:80]
+    else:
+        yield sse_event("error", {"message": "Either event_description or event_id is required"})
+        return
+
+    # Check cache
+    input_hash = compute_input_hash("fulfillment", description)
+    cached = await get_cached_analysis("fulfillment", input_hash, session)
+    if cached:
+        cached_data = json.loads(cached.result_json)
+        yield sse_event("status", {"message": f"Returning cached analysis for '{summary}'..."})
+        for match in cached_data.get("matches", []):
+            prophecy = await session.get(Prophecy, match.get("prophecy_id"))
+            match["prophecy_title"] = prophecy.title if prophecy else "Unknown"
+            yield sse_event("match", match)
+        yield sse_event("complete", {"total_matches": len(cached_data.get("matches", [])), "cached": True})
+        return
+
+    # Fetch unfulfilled/partially fulfilled prophecies
+    result = await session.exec(
+        select(Prophecy).where(Prophecy.status.in_(["unfulfilled", "partially_fulfilled"]))
+    )
+    prophecies = result.all()
+
+    yield sse_event("status", {
+        "message": f"Analyzing which prophecies '{summary}' might fulfill ({len(prophecies)} candidates)..."
+    })
+
+    # Build prompt and call Claude
+    prompt = build_fulfillment_prompt(description, prophecies)
+    valid_ids = {p.id for p in prophecies}
+
+    try:
+        client = _get_client()
+        response = await client.messages.create(
+            model=settings.CLAUDE_MODEL,
+            max_tokens=4096,
+            system=FULFILLMENT_SYSTEM,
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        raw_text = response.content[0].text
+        if raw_text.startswith("```"):
+            raw_text = raw_text.split("\n", 1)[1].rsplit("```", 1)[0]
+
+        data = json.loads(raw_text)
+        matches = data.get("matches", [])
+
+    except anthropic.APIError as e:
+        logger.error(f"Anthropic API error: {e}")
+        yield sse_event("error", {"message": f"AI service error: {e.message}"})
+        return
+    except (json.JSONDecodeError, KeyError, IndexError) as e:
+        logger.error(f"Failed to parse AI response: {e}")
+        yield sse_event("error", {"message": "Failed to parse AI response"})
+        return
+
+    # Validate and yield matches
+    valid_matches = []
+    for match in matches:
+        prophecy_id = match.get("prophecy_id")
+        if prophecy_id not in valid_ids:
+            continue
+        match["match_confidence"] = max(0.0, min(1.0, float(match.get("match_confidence", 0.5))))
+        prophecy = await session.get(Prophecy, prophecy_id)
+        match["prophecy_title"] = prophecy.title if prophecy else "Unknown"
+        valid_matches.append(match)
+        yield sse_event("match", match)
+
+    # Cache the result
+    await store_analysis(
+        analysis_type="fulfillment",
+        input_hash=input_hash,
+        input_summary=summary,
+        result_json=json.dumps({"matches": valid_matches}),
+        model_version=settings.CLAUDE_MODEL,
+        session=session,
+    )
+
+    yield sse_event("complete", {"total_matches": len(valid_matches), "cached": False})
+
+
+# --- TWOW Predictions ---
+
+async def predict_single(prophecy_id: int, session: AsyncSession) -> AsyncGenerator:
+    prophecy = await session.get(Prophecy, prophecy_id)
+    if prophecy is None:
+        raise NotFoundError(f"Prophecy with id {prophecy_id} not found")
+
+    # Check cache
+    input_hash = compute_input_hash("prediction_single", f"{prophecy_id}:{settings.CLAUDE_MODEL}")
+    cached = await get_cached_analysis("prediction_single", input_hash, session)
+    if cached:
+        cached_data = json.loads(cached.result_json)
+        yield sse_event("status", {"message": f"Returning cached prediction for '{prophecy.title}'..."})
+        yield sse_event("chunk", {"text": cached_data.get("text", "")})
+        yield sse_event("complete", {"cached": True})
+        return
+
+    # Fetch connections for this prophecy
+    conn_result = await session.exec(
+        select(Connection).where(
+            or_(
+                Connection.source_prophecy_id == prophecy_id,
+                Connection.target_prophecy_id == prophecy_id,
+            )
+        )
+    )
+    connections = conn_result.all()
+
+    # Build prophecies lookup for connection formatting
+    all_result = await session.exec(select(Prophecy))
+    prophecies_by_id = {p.id: p for p in all_result.all()}
+
+    yield sse_event("status", {
+        "message": f"Generating TWOW prediction for '{prophecy.title}'..."
+    })
+
+    prompt = build_prediction_single_prompt(prophecy, connections, prophecies_by_id)
+
+    try:
+        client = _get_client()
+        full_text = ""
+        async with client.messages.stream(
+            model=settings.CLAUDE_MODEL,
+            max_tokens=2048,
+            system=PREDICTION_SYSTEM,
+            messages=[{"role": "user", "content": prompt}],
+        ) as stream:
+            async for text in stream.text_stream:
+                full_text += text
+                yield sse_event("chunk", {"text": text})
+
+        # Cache the full result
+        await store_analysis(
+            analysis_type="prediction_single",
+            input_hash=input_hash,
+            input_summary=f"Prediction for: {prophecy.title}",
+            result_json=json.dumps({"text": full_text}),
+            model_version=settings.CLAUDE_MODEL,
+            session=session,
+        )
+
+        yield sse_event("complete", {"cached": False})
+
+    except anthropic.APIError as e:
+        logger.error(f"Anthropic API error: {e}")
+        yield sse_event("error", {"message": f"AI service error: {e.message}"})
+
+
+async def predict_global(session: AsyncSession) -> AsyncGenerator:
+    # Fetch all unfulfilled prophecies
+    result = await session.exec(
+        select(Prophecy).where(Prophecy.status.in_(["unfulfilled", "partially_fulfilled", "debated"]))
+    )
+    prophecies = result.all()
+
+    # Check cache
+    prophecy_ids = sorted(p.id for p in prophecies)
+    input_hash = compute_input_hash("prediction_global", f"{prophecy_ids}:{settings.CLAUDE_MODEL}")
+    cached = await get_cached_analysis("prediction_global", input_hash, session)
+    if cached:
+        cached_data = json.loads(cached.result_json)
+        yield sse_event("status", {"message": "Returning cached global predictions report..."})
+        yield sse_event("chunk", {"text": cached_data.get("text", "")})
+        yield sse_event("complete", {"cached": True})
+        return
+
+    # Fetch all connections
+    conn_result = await session.exec(select(Connection))
+    connections = conn_result.all()
+
+    # Build lookup
+    all_result = await session.exec(select(Prophecy))
+    prophecies_by_id = {p.id: p for p in all_result.all()}
+
+    yield sse_event("status", {
+        "message": f"Generating global TWOW predictions report for {len(prophecies)} unfulfilled prophecies..."
+    })
+
+    prompt = build_prediction_global_prompt(prophecies, connections, prophecies_by_id)
+
+    try:
+        client = _get_client()
+        full_text = ""
+        async with client.messages.stream(
+            model=settings.CLAUDE_MODEL,
+            max_tokens=8192,
+            system=PREDICTION_SYSTEM,
+            messages=[{"role": "user", "content": prompt}],
+        ) as stream:
+            async for text in stream.text_stream:
+                full_text += text
+                yield sse_event("chunk", {"text": text})
+
+        # Cache the full result
+        await store_analysis(
+            analysis_type="prediction_global",
+            input_hash=input_hash,
+            input_summary="Global TWOW Predictions Report",
+            result_json=json.dumps({"text": full_text}),
+            model_version=settings.CLAUDE_MODEL,
+            session=session,
+        )
+
+        yield sse_event("complete", {"cached": False})
+
+    except anthropic.APIError as e:
+        logger.error(f"Anthropic API error: {e}")
+        yield sse_event("error", {"message": f"AI service error: {e.message}"})
