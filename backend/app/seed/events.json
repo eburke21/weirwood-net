@@ -82,5 +82,82 @@
     "book": 1,
     "chapter": "AGOT Catelyn X",
     "characters_involved": ["Robb Stark", "Jaime Lannister", "Catelyn Stark", "Grey Wind"]
+  },
+  {
+    "title": "Robert Baratheon's Death",
+    "description": "King Robert Baratheon dies from wounds sustained during a boar hunt, his reflexes dulled by strongwine provided by his squire Lancel Lannister at Cersei's instruction. His death triggers the War of the Five Kings.",
+    "book": 1,
+    "chapter": "AGOT Eddard XIII",
+    "characters_involved": ["Robert Baratheon", "Cersei Lannister", "Eddard Stark", "Lancel Lannister"]
+  },
+  {
+    "title": "Bran's Fall from the Tower",
+    "description": "Bran Stark climbs a tower in Winterfell and discovers Cersei and Jaime Lannister in an intimate embrace. Jaime pushes Bran from the window to protect the secret, crippling him and setting the central conflict in motion.",
+    "book": 1,
+    "chapter": "AGOT Bran II",
+    "characters_involved": ["Bran Stark", "Jaime Lannister", "Cersei Lannister"]
+  },
+  {
+    "title": "Renly Baratheon's Death by Shadow",
+    "description": "Renly Baratheon is killed in his tent by a shadow assassin birthed by Melisandre using Stannis's life force. Brienne of Tarth is present and falsely blamed for the murder, beginning her quest to clear her name.",
+    "book": 2,
+    "chapter": "ACOK Catelyn IV",
+    "characters_involved": ["Renly Baratheon", "Brienne of Tarth", "Melisandre", "Stannis Baratheon", "Catelyn Stark"]
+  },
+  {
+    "title": "Theon Captures Winterfell",
+    "description": "Theon Greyjoy seizes Winterfell with a small force of Ironborn while the castle is lightly defended. He takes Bran and Rickon captive and declares himself Prince of Winterfell, betraying the Starks who raised him.",
+    "book": 2,
+    "chapter": "ACOK Theon IV",
+    "characters_involved": ["Theon Greyjoy", "Bran Stark", "Rickon Stark", "Maester Luwin"]
+  },
+  {
+    "title": "Daenerys Conquers Meereen",
+    "description": "Daenerys takes the slaver city of Meereen by infiltrating the sewers and sparking a slave uprising from within. She frees the slaves and installs herself as queen, beginning her controversial rule over Slaver's Bay.",
+    "book": 3,
+    "chapter": "ASOS Daenerys VI",
+    "characters_involved": ["Daenerys Targaryen", "Jorah Mormont", "Grey Worm", "Barristan Selmy", "Daario Naharis"]
+  },
+  {
+    "title": "Lysa Arryn's Death at the Eyrie",
+    "description": "After Lysa Arryn attempts to push Sansa Stark through the Moon Door in a jealous rage, Petyr Baelish intervenes and shoves Lysa to her death instead, revealing his true ruthlessness and securing his control over the Vale.",
+    "book": 3,
+    "chapter": "ASOS Sansa VII",
+    "characters_involved": ["Lysa Arryn", "Petyr Baelish", "Sansa Stark"]
+  },
+  {
+    "title": "Brienne Encounters Lady Stoneheart",
+    "description": "Brienne of Tarth is captured by the Brotherhood Without Banners, now led by Lady Stoneheart — the resurrected Catelyn Stark. Stoneheart sentences Brienne to hang for carrying a Lannister sword and serving the family she blames for her death.",
+    "book": 4,
+    "chapter": "AFFC Brienne VIII",
+    "characters_involved": ["Brienne of Tarth", "Lady Stoneheart", "Podrick Payne", "Thoros of Myr"]
+  },
+  {
+    "title": "Euron Greyjoy Wins the Kingsmoot",
+    "description": "After Balon Greyjoy's death, the Ironborn hold a Kingsmoot on Old Wyk to choose their next ruler. Euron Crow's Eye wins by presenting Dragonbinder, a Valyrian horn he claims can bind dragons, and promising the Ironborn dominion over all Westeros.",
+    "book": 4,
+    "chapter": "AFFC The Drowned Man",
+    "characters_involved": ["Euron Greyjoy", "Victarion Greyjoy", "Asha Greyjoy", "Aeron Greyjoy"]
+  },
+  {
+    "title": "Daenerys Rides Drogon in Daznak's Pit",
+    "description": "During the reopened fighting pits of Meereen, Drogon descends into Daznak's Pit and kills several people. Daenerys approaches him, mounts him for the first time, and flies away from the city, leaving her court in chaos.",
+    "book": 5,
+    "chapter": "ADWD Daenerys IX",
+    "characters_involved": ["Daenerys Targaryen", "Drogon", "Hizdahr zo Loraq", "Barristan Selmy"]
+  },
+  {
+    "title": "Young Griff Lands in Westeros",
+    "description": "Young Griff, claiming to be Aegon Targaryen son of Rhaegar, lands in the Stormlands with the Golden Company. Guided by Jon Connington, they begin seizing castles and establishing a foothold in Westeros ahead of Daenerys.",
+    "book": 5,
+    "chapter": "ADWD The Griffin Reborn",
+    "characters_involved": ["Young Griff", "Jon Connington", "Varys", "Tyrion Lannister"]
+  },
+  {
+    "title": "Quentyn Martell's Death",
+    "description": "Prince Quentyn Martell of Dorne attempts to tame one of Daenerys's dragons in the catacombs beneath Meereen. Rhaegal sets him ablaze and he dies of his burns days later, ending Doran Martell's carefully laid plans for a Targaryen alliance.",
+    "book": 5,
+    "chapter": "ADWD The Dragontamer",
+    "characters_involved": ["Quentyn Martell", "Rhaegal", "Viserion", "Barristan Selmy"]
   }
 ]
