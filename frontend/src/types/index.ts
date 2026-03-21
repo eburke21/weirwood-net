@@ -61,12 +61,43 @@ export interface Event {
   characters_involved: string[];
 }
 
+export interface ProphecyListItem extends Prophecy {
+  connection_count: number;
+}
+
+export interface ProphecyDetail extends Prophecy {
+  connections: ProphecyConnection[];
+}
+
+export interface ProphecyConnection {
+  id: number;
+  connected_prophecy: { id: number; title: string; status: ProphecyStatus } | null;
+  connection_type: ConnectionType;
+  confidence: number;
+  evidence: string;
+  implication: string;
+  model_version: string;
+  generated_at: string;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;
-  page: number;
-  per_page: number;
-  pages: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ProphecyFilters {
+  book?: number;
+  character?: string;
+  type?: ProphecyType;
+  status?: ProphecyStatus;
+  subject?: string;
+  search?: string;
+  sort_by?: string;
+  sort_order?: string;
+  limit?: number;
+  offset?: number;
 }
 
 export interface GraphNode {
