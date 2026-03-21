@@ -3,7 +3,7 @@ import {
   Separator, Spinner,
 } from "@chakra-ui/react";
 import { Alert } from "@chakra-ui/react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useProphecy } from "../api/prophecies";
@@ -14,6 +14,7 @@ import BookBadge from "../components/shared/BookBadge";
 import TypeIcon from "../components/shared/TypeIcon";
 import StreamingText from "../components/shared/StreamingText";
 import ConnectionCard from "../components/connections/ConnectionCard";
+import SpokeGraph from "../components/connections/SpokeGraph";
 import type { ConnectionType } from "../types";
 
 interface CachedConnectionsResponse {
@@ -214,6 +215,38 @@ function ConnectionsPanel({ prophecyId }: { prophecyId: number }) {
   );
 }
 
+function SpokeGraphSection({ prophecyId, prophecyTitle, prophecyType }: { prophecyId: number; prophecyTitle: string; prophecyType: import("../types").ProphecyType }) {
+  const navigate = useNavigate();
+  const { data: cachedData } = useQuery({
+    queryKey: ["connections", prophecyId],
+    queryFn: () => fetchApi<CachedConnectionsResponse>(`/api/v1/prophecies/${prophecyId}/connections`),
+  });
+
+  if (!cachedData?.cached || cachedData.connections.length === 0) return null;
+
+  const spokeNodes = cachedData.connections.map((conn) => ({
+    id: conn.connected_prophecy?.id ?? 0,
+    title: conn.connected_prophecy?.title ?? "Unknown",
+    type: (conn.connected_prophecy?.status ?? "other") as import("../types").ProphecyType, // Use status as rough type fallback
+    connectionType: conn.connection_type,
+    confidence: conn.confidence,
+  }));
+
+  return (
+    <Box>
+      <Heading size="sm" mb={2}>Connection Graph</Heading>
+      <Flex justify="center">
+        <SpokeGraph
+          centralTitle={prophecyTitle}
+          centralType={prophecyType}
+          connections={spokeNodes}
+          onNodeClick={(id) => navigate(`/prophecy/${id}`)}
+        />
+      </Flex>
+    </Box>
+  );
+}
+
 function PredictionPanel({ prophecyId, prophecyTitle }: { prophecyId: number; prophecyTitle: string }) {
   const sseOptions = useMemo(() => ({
     endpoint: `/api/v1/predict/prophecy/${prophecyId}`,
@@ -373,6 +406,9 @@ export default function ProphecyDetail() {
 
       {/* Connections panel */}
       <ConnectionsPanel prophecyId={prophecyId} />
+
+      {/* Spoke graph (shows when connections exist) */}
+      <SpokeGraphSection prophecyId={prophecyId} prophecyTitle={prophecy.title} prophecyType={prophecy.prophecy_type} />
 
       <Separator />
 
