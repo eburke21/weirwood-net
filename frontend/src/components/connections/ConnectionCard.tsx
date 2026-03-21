@@ -1,4 +1,5 @@
 import { Box, Badge, Text, Flex, HStack } from "@chakra-ui/react";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import ConfidenceBadge from "../shared/ConfidenceBadge";
 import type { ConnectionType } from "../../types";
@@ -34,13 +35,17 @@ export default function ConnectionCard({ connection }: { connection: ConnectionD
   const label = TYPE_LABELS[connection.connection_type] ?? connection.connection_type;
 
   return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+    >
     <Box
       bg="bg.card"
       borderWidth="1px"
       borderColor="border"
       rounded="lg"
       p={4}
-      transition="all 0.2s"
     >
       <HStack gap={2} mb={3}>
         <Badge colorPalette={color} variant="subtle">{label}</Badge>
@@ -67,5 +72,6 @@ export default function ConnectionCard({ connection }: { connection: ConnectionD
         </Box>
       </Flex>
     </Box>
+    </motion.div>
   );
 }
