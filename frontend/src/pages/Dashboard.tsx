@@ -103,7 +103,7 @@ export default function Dashboard() {
         <Text fontSize="sm" color="text.secondary">
           {data ? `${data.total} prophecies` : "Loading..."}
         </Text>
-        <Flex gap={1}>
+        <Flex gap={1} display={{ base: "none", md: "flex" }}>
           <Button
             size="xs"
             variant={view === "cards" ? "solid" : "ghost"}

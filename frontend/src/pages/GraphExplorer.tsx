@@ -1,4 +1,4 @@
-import { Heading, Text, VStack, Flex, Box, Spinner } from "@chakra-ui/react";
+import { Heading, Text, VStack, Flex, Box, Spinner, SimpleGrid, Badge } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useGraphData, type GraphFilters } from "../api/graph";
@@ -58,12 +58,45 @@ export default function GraphExplorer() {
         )}
 
         {data && data.nodes.length > 0 && (
-          <ForceGraph
-            data={data}
-            width={dimensions.width}
-            height={dimensions.height}
-            onNodeClick={handleNodeClick}
-          />
+          <>
+            {/* Graph on md+ screens */}
+            <Box display={{ base: "none", md: "block" }}>
+              <ForceGraph
+                data={data}
+                width={dimensions.width}
+                height={dimensions.height}
+                onNodeClick={handleNodeClick}
+              />
+            </Box>
+            {/* Simple list on mobile */}
+            <Box display={{ base: "block", md: "none" }}>
+              <Text fontSize="sm" color="text.secondary" mb={3}>
+                Graph visualization is best viewed on a larger screen. Showing prophecy list:
+              </Text>
+              <SimpleGrid columns={1} gap={2}>
+                {data.nodes.map((node) => (
+                  <Box
+                    key={node.id}
+                    bg="bg.card"
+                    p={3}
+                    rounded="md"
+                    borderWidth="1px"
+                    borderColor="border"
+                    cursor="pointer"
+                    onClick={() => handleNodeClick(node.id)}
+                  >
+                    <Flex justify="space-between" align="center">
+                      <Text fontWeight="medium" fontSize="sm">{node.title}</Text>
+                      {node.connection_count > 0 && (
+                        <Badge colorPalette="purple" size="sm">{node.connection_count} links</Badge>
+                      )}
+                    </Flex>
+                    <Text fontSize="xs" color="text.secondary">{node.source_character}</Text>
+                  </Box>
+                ))}
+              </SimpleGrid>
+            </Box>
+          </>
         )}
 
         {data && data.nodes.length === 0 && (
@@ -73,7 +106,9 @@ export default function GraphExplorer() {
         )}
       </Box>
 
-      <GraphLegend />
+      <Box display={{ base: "none", md: "block" }}>
+        <GraphLegend />
+      </Box>
     </VStack>
   );
 }
