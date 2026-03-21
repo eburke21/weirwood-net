@@ -214,6 +214,81 @@ function ConnectionsPanel({ prophecyId }: { prophecyId: number }) {
   );
 }
 
+function PredictionPanel({ prophecyId, prophecyTitle }: { prophecyId: number; prophecyTitle: string }) {
+  const sseOptions = useMemo(() => ({
+    endpoint: `/api/v1/predict/prophecy/${prophecyId}`,
+    method: "POST" as const,
+  }), [prophecyId]);
+
+  const { events, isStreaming, isComplete, error, start } = useSSE(sseOptions);
+
+  const statusMessage = events.find((e) => e.event === "status")?.data?.message as string | undefined;
+  const accumulatedText = events
+    .filter((e) => e.event === "chunk")
+    .map((e) => (e.data as { text: string }).text)
+    .join("");
+
+  return (
+    <Box>
+      <Flex justify="space-between" align="center" mb={3}>
+        <Heading size="md">TWOW Prediction</Heading>
+        {!isStreaming && !accumulatedText && (
+          <Button size="sm" variant="outline" onClick={start}>
+            Predict TWOW
+          </Button>
+        )}
+      </Flex>
+
+      {isStreaming && statusMessage && !accumulatedText && (
+        <StreamingText text={statusMessage} isStreaming={true} />
+      )}
+
+      {error && (
+        <Alert.Root status="error">
+          <Alert.Title>Prediction failed</Alert.Title>
+          <Alert.Description>{error}</Alert.Description>
+        </Alert.Root>
+      )}
+
+      {accumulatedText && (
+        <Box
+          bg="bg.card"
+          p={4}
+          rounded="md"
+          borderWidth="1px"
+          borderColor="border"
+          whiteSpace="pre-wrap"
+          fontSize="sm"
+          lineHeight="tall"
+        >
+          {accumulatedText}
+          {isStreaming && (
+            <Box
+              as="span"
+              display="inline-block"
+              w="2px"
+              h="1em"
+              bg="accent"
+              ml={1}
+              verticalAlign="text-bottom"
+              animation="blink 1s step-end infinite"
+              css={{ "@keyframes blink": { "50%": { opacity: 0 } } }}
+            />
+          )}
+        </Box>
+      )}
+
+      {!isStreaming && !accumulatedText && !error && (
+        <Box bg="bg.card" p={6} rounded="md" borderWidth="1px" borderColor="border" textAlign="center">
+          <Text color="text.secondary">
+            Click "Predict TWOW" to generate an AI analysis of how this prophecy might be fulfilled.
+          </Text>
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 export default function ProphecyDetail() {
   const { id } = useParams<{ id: string }>();
   const prophecyId = Number(id);
@@ -301,10 +376,23 @@ export default function ProphecyDetail() {
 
       <Separator />
 
-      {/* Actions placeholder */}
+      {/* TWOW Prediction panel */}
+      <PredictionPanel prophecyId={prophecyId} prophecyTitle={prophecy.title} />
+
+      <Separator />
+
+      {/* Export */}
       <Flex gap={3}>
-        <Button disabled variant="outline" size="sm">Predict TWOW</Button>
-        <Button disabled variant="ghost" size="sm">Export</Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+            window.open(`${API_BASE}/api/v1/export/prophecy/${prophecyId}`, "_blank");
+          }}
+        >
+          Export Markdown
+        </Button>
       </Flex>
     </VStack>
   );
