@@ -13,6 +13,9 @@ from app.seed.loader import seed_database
 from app.routers.prophecies import router as prophecies_router
 from app.routers.events import router as events_router
 from app.routers.connections import router as connections_router
+from app.routers.analyze import router as analyze_router
+from app.routers.predict import router as predict_router
+from app.routers.export import router as export_router
 import app.models  # noqa: F401 — ensure all models are registered with SQLModel metadata
 
 
@@ -43,6 +46,9 @@ app.add_middleware(
 app.include_router(prophecies_router)
 app.include_router(events_router)
 app.include_router(connections_router)
+app.include_router(analyze_router)
+app.include_router(predict_router)
+app.include_router(export_router)
 
 app.add_exception_handler(NotFoundError, not_found_handler)
 app.add_exception_handler(ValidationError, validation_error_handler)
