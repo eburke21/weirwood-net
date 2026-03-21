@@ -1,0 +1,86 @@
+[
+  {
+    "title": "Red Wedding",
+    "description": "At the wedding feast of Edmure Tully and Roslin Frey, Walder Frey and Roose Bolton betray Robb Stark. Robb, Catelyn, Grey Wind, and most of the Northern army are slaughtered under guest right.",
+    "book": 3,
+    "chapter": "ASOS Catelyn VII",
+    "characters_involved": ["Robb Stark", "Catelyn Stark", "Walder Frey", "Roose Bolton", "Grey Wind", "Edmure Tully"]
+  },
+  {
+    "title": "Purple Wedding",
+    "description": "King Joffrey Baratheon dies of poison at his own wedding feast to Margaery Tyrell. The strangler poison was concealed in Sansa Stark's hairnet and administered by Olenna Tyrell.",
+    "book": 3,
+    "chapter": "ASOS Tyrion VIII",
+    "characters_involved": ["Joffrey Baratheon", "Margaery Tyrell", "Sansa Stark", "Olenna Tyrell", "Tyrion Lannister", "Petyr Baelish"]
+  },
+  {
+    "title": "Battle of the Blackwater",
+    "description": "Stannis Baratheon's fleet attacks King's Landing by sea. Tyrion destroys much of the fleet with wildfire, but the battle nearly falls until Tywin Lannister and the Tyrells arrive as reinforcements.",
+    "book": 2,
+    "chapter": "ACOK Tyrion XIV",
+    "characters_involved": ["Stannis Baratheon", "Tyrion Lannister", "Tywin Lannister", "Davos Seaworth", "Loras Tyrell"]
+  },
+  {
+    "title": "Daenerys Hatches the Dragons",
+    "description": "Daenerys walks into Khal Drogo's funeral pyre with three petrified dragon eggs. She emerges unburned with three living dragons — the first seen in the world in over a century.",
+    "book": 1,
+    "chapter": "AGOT Daenerys X",
+    "characters_involved": ["Daenerys Targaryen", "Khal Drogo", "Mirri Maz Duur"]
+  },
+  {
+    "title": "Ned Stark's Execution",
+    "description": "Eddard Stark is publicly beheaded on the steps of the Great Sept of Baelor on King Joffrey's orders, despite Cersei and the Small Council's plan to let him take the black.",
+    "book": 1,
+    "chapter": "AGOT Arya V",
+    "characters_involved": ["Eddard Stark", "Joffrey Baratheon", "Cersei Lannister", "Sansa Stark", "Arya Stark", "Ilyn Payne"]
+  },
+  {
+    "title": "Daenerys in the House of the Undying",
+    "description": "Daenerys enters the House of the Undying Ones in Qarth seeking knowledge. She experiences a series of prophetic visions before the Undying attempt to drain her life. Drogon rescues her by setting the building ablaze.",
+    "book": 2,
+    "chapter": "ACOK Daenerys IV",
+    "characters_involved": ["Daenerys Targaryen", "Pyat Pree", "Drogon"]
+  },
+  {
+    "title": "Battle of Castle Black",
+    "description": "The Night's Watch defends the Wall against Mance Rayder's wildling army attacking from both sides. Jon Snow leads the defense of Castle Black. Stannis Baratheon's cavalry arrives and shatters the wildling forces.",
+    "book": 3,
+    "chapter": "ASOS Jon VIII",
+    "characters_involved": ["Jon Snow", "Mance Rayder", "Stannis Baratheon", "Ygritte", "Donal Noye"]
+  },
+  {
+    "title": "Tyrion Kills Tywin",
+    "description": "After Jaime frees him from the black cells, Tyrion discovers Shae in Tywin's bed and strangles her. He then finds Tywin in the privy and kills him with a crossbow bolt.",
+    "book": 3,
+    "chapter": "ASOS Tyrion XI",
+    "characters_involved": ["Tyrion Lannister", "Tywin Lannister", "Jaime Lannister", "Shae", "Varys"]
+  },
+  {
+    "title": "Bran Reaches the Three-Eyed Crow",
+    "description": "After a long and harrowing journey beyond the Wall, Bran, Hodor, Meera, and Jojen reach the cave of the Three-Eyed Crow — the last greenseer, Brynden Rivers — hidden beneath a great weirwood tree.",
+    "book": 5,
+    "chapter": "ADWD Bran II",
+    "characters_involved": ["Bran Stark", "Brynden Rivers", "Meera Reed", "Jojen Reed", "Hodor", "Leaf"]
+  },
+  {
+    "title": "Jon Snow's Assassination",
+    "description": "Brothers of the Night's Watch, led by Bowen Marsh, stab Jon Snow repeatedly in a mutiny after Jon announces plans to march on Winterfell to confront Ramsay Bolton. Jon falls in the snow, his wounds steaming.",
+    "book": 5,
+    "chapter": "ADWD Jon XIII",
+    "characters_involved": ["Jon Snow", "Bowen Marsh", "Wick Whittlestick", "Olly"]
+  },
+  {
+    "title": "Cersei's Walk of Shame",
+    "description": "Cersei Lannister is forced to walk naked through the streets of King's Landing from the Great Sept of Baelor to the Red Keep as penance for her sins, confessed to the High Sparrow.",
+    "book": 5,
+    "chapter": "ADWD Cersei II",
+    "characters_involved": ["Cersei Lannister", "High Sparrow", "Septa Unella"]
+  },
+  {
+    "title": "Battle of the Whispering Wood",
+    "description": "Robb Stark lures Jaime Lannister into an ambush in the Whispering Wood, capturing him and destroying his force. This is Robb's first great military victory and establishes his reputation as a battle commander.",
+    "book": 1,
+    "chapter": "AGOT Catelyn X",
+    "characters_involved": ["Robb Stark", "Jaime Lannister", "Catelyn Stark", "Grey Wind"]
+  }
+]
