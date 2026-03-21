@@ -103,9 +103,10 @@ export interface ProphecyFilters {
 export interface GraphNode {
   id: number;
   title: string;
-  prophecy_type: ProphecyType;
+  type: ProphecyType;
   status: ProphecyStatus;
-  source_book: number;
+  book: number;
+  source_character: string;
   connection_count: number;
 }
 
@@ -116,7 +117,14 @@ export interface GraphEdge {
   confidence: number;
 }
 
+export interface GraphStats {
+  total_nodes: number;
+  total_edges: number;
+  avg_connections: number;
+}
+
 export interface GraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  stats: GraphStats;
 }
