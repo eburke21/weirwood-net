@@ -1,25 +1,23 @@
 import { Routes, Route } from "react-router-dom";
-import { Container, Heading, Text, VStack } from "@chakra-ui/react";
-
-function HomePage() {
-  return (
-    <Container maxW="container.xl" py={16}>
-      <VStack gap={4}>
-        <Heading as="h1" size="4xl">
-          Weirwood.net
-        </Heading>
-        <Text fontSize="xl" color="fg.muted">
-          ASOIAF Prophecy Tracker & Connection Engine
-        </Text>
-      </VStack>
-    </Container>
-  );
-}
+import Layout from "./components/layout/Layout";
+import Dashboard from "./pages/Dashboard";
+import ProphecyDetail from "./pages/ProphecyDetail";
+import GraphExplorer from "./pages/GraphExplorer";
+import FulfillmentAnalyzer from "./pages/FulfillmentAnalyzer";
+import TWOWPredictions from "./pages/TWOWPredictions";
+import About from "./pages/About";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route element={<Layout />}>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/prophecy/:id" element={<ProphecyDetail />} />
+        <Route path="/explore" element={<GraphExplorer />} />
+        <Route path="/analyze" element={<FulfillmentAnalyzer />} />
+        <Route path="/predict" element={<TWOWPredictions />} />
+        <Route path="/about" element={<About />} />
+      </Route>
     </Routes>
   );
 }
