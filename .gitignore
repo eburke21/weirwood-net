@@ -23,6 +23,7 @@ dist/
 *.swp
 *.swo
 dev-docs/
+.claude/
 
 # OS
 .DS_Store
