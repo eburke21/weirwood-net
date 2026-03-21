@@ -16,6 +16,7 @@ from app.routers.connections import router as connections_router
 from app.routers.analyze import router as analyze_router
 from app.routers.predict import router as predict_router
 from app.routers.export import router as export_router
+from app.routers.graph import router as graph_router
 import app.models  # noqa: F401 — ensure all models are registered with SQLModel metadata
 
 
@@ -49,6 +50,7 @@ app.include_router(connections_router)
 app.include_router(analyze_router)
 app.include_router(predict_router)
 app.include_router(export_router)
+app.include_router(graph_router)
 
 app.add_exception_handler(NotFoundError, not_found_handler)
 app.add_exception_handler(ValidationError, validation_error_handler)
