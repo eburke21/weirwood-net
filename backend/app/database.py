@@ -8,7 +8,7 @@ from app.config import settings
 
 engine = create_async_engine(settings.DATABASE_URL, echo=False)
 
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore[call-overload]
 
 FTS_CREATE = """
 CREATE VIRTUAL TABLE IF NOT EXISTS prophecies_fts USING fts5(

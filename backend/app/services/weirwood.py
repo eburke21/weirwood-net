@@ -4,6 +4,7 @@ import logging
 from collections.abc import AsyncGenerator
 
 import anthropic
+from anthropic.types import TextBlock
 from sqlalchemy import or_
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -73,8 +74,8 @@ async def store_analysis(
 async def get_cached_connections(prophecy_id: int, session: AsyncSession) -> list[dict]:
     query = select(Connection).where(
         or_(
-            Connection.source_prophecy_id == prophecy_id,
-            Connection.target_prophecy_id == prophecy_id,
+            Connection.source_prophecy_id == prophecy_id,  # type: ignore[arg-type]
+            Connection.target_prophecy_id == prophecy_id,  # type: ignore[arg-type]
         )
     )
     result = await session.exec(query)
@@ -134,7 +135,8 @@ async def find_connections(prophecy_id: int, session: AsyncSession) -> AsyncGene
         )
 
         # Extract text content
-        raw_text = response.content[0].text
+        first_block = response.content[0]
+        raw_text = first_block.text if isinstance(first_block, TextBlock) else ""
         # Strip markdown code fences if present
         if raw_text.startswith("```"):
             raw_text = raw_text.split("\n", 1)[1].rsplit("```", 1)[0]
@@ -259,7 +261,7 @@ async def analyze_fulfillment(
 
     # Fetch unfulfilled/partially fulfilled prophecies
     result = await session.exec(
-        select(Prophecy).where(Prophecy.status.in_(["unfulfilled", "partially_fulfilled"]))
+        select(Prophecy).where(Prophecy.status.in_(["unfulfilled", "partially_fulfilled"]))  # type: ignore[attr-defined]
     )
     prophecies = result.all()
 
@@ -280,7 +282,8 @@ async def analyze_fulfillment(
             messages=[{"role": "user", "content": prompt}],
         )
 
-        raw_text = response.content[0].text
+        first_block = response.content[0]
+        raw_text = first_block.text if isinstance(first_block, TextBlock) else ""
         if raw_text.startswith("```"):
             raw_text = raw_text.split("\n", 1)[1].rsplit("```", 1)[0]
 
@@ -342,8 +345,8 @@ async def predict_single(prophecy_id: int, session: AsyncSession) -> AsyncGenera
     conn_result = await session.exec(
         select(Connection).where(
             or_(
-                Connection.source_prophecy_id == prophecy_id,
-                Connection.target_prophecy_id == prophecy_id,
+                Connection.source_prophecy_id == prophecy_id,  # type: ignore[arg-type]
+                Connection.target_prophecy_id == prophecy_id,  # type: ignore[arg-type]
             )
         )
     )
@@ -351,7 +354,7 @@ async def predict_single(prophecy_id: int, session: AsyncSession) -> AsyncGenera
 
     # Build prophecies lookup for connection formatting
     all_result = await session.exec(select(Prophecy))
-    prophecies_by_id = {p.id: p for p in all_result.all()}
+    prophecies_by_id: dict[int, Prophecy] = {p.id: p for p in all_result.all() if p.id is not None}
 
     yield sse_event("status", {
         "message": f"Generating TWOW prediction for '{prophecy.title}'..."
@@ -392,12 +395,12 @@ async def predict_single(prophecy_id: int, session: AsyncSession) -> AsyncGenera
 async def predict_global(session: AsyncSession) -> AsyncGenerator:
     # Fetch all unfulfilled prophecies
     result = await session.exec(
-        select(Prophecy).where(Prophecy.status.in_(["unfulfilled", "partially_fulfilled", "debated"]))
+        select(Prophecy).where(Prophecy.status.in_(["unfulfilled", "partially_fulfilled", "debated"]))  # type: ignore[attr-defined]
     )
     prophecies = result.all()
 
     # Check cache
-    prophecy_ids = sorted(p.id for p in prophecies)
+    prophecy_ids = sorted(p.id for p in prophecies if p.id is not None)
     input_hash = compute_input_hash("prediction_global", f"{prophecy_ids}:{settings.CLAUDE_MODEL}")
     cached = await get_cached_analysis("prediction_global", input_hash, session)
     if cached:
@@ -413,7 +416,7 @@ async def predict_global(session: AsyncSession) -> AsyncGenerator:
 
     # Build lookup
     all_result = await session.exec(select(Prophecy))
-    prophecies_by_id = {p.id: p for p in all_result.all()}
+    prophecies_by_id: dict[int, Prophecy] = {p.id: p for p in all_result.all() if p.id is not None}
 
     yield sse_event("status", {
         "message": f"Generating global TWOW predictions report for {len(prophecies)} unfulfilled prophecies..."

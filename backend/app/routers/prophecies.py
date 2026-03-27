@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, literal_column, or_, text
@@ -35,8 +36,8 @@ async def list_prophecies(
         select(func.count())
         .where(
             or_(
-                Connection.source_prophecy_id == Prophecy.id,
-                Connection.target_prophecy_id == Prophecy.id,
+                Connection.source_prophecy_id == Prophecy.id,  # type: ignore[arg-type]
+                Connection.target_prophecy_id == Prophecy.id,  # type: ignore[arg-type]
             )
         )
         .correlate(Prophecy)
@@ -49,7 +50,7 @@ async def list_prophecies(
     if book is not None:
         query = query.where(Prophecy.source_book == book)
     if character is not None:
-        query = query.where(Prophecy.source_character.ilike(f"%{character}%"))
+        query = query.where(Prophecy.source_character.ilike(f"%{character}%"))  # type: ignore[attr-defined]
     if type is not None:
         query = query.where(Prophecy.prophecy_type == type)
     if status is not None:
@@ -59,21 +60,21 @@ async def list_prophecies(
     if search is not None:
         try:
             # Use FTS5 for relevance-ranked search
-            fts_ids = select(literal_column("rowid")).select_from(
+            fts_ids: Any = select(literal_column("rowid")).select_from(
                 text("prophecies_fts")
             ).where(
                 text("prophecies_fts MATCH :search")
             ).params(search=search)
-            query = query.where(Prophecy.id.in_(fts_ids))
+            query = query.where(Prophecy.id.in_(fts_ids))  # type: ignore[union-attr]
         except Exception:
             # Fall back to LIKE if FTS5 is not available
             logger.warning("FTS5 search failed, falling back to LIKE")
             pattern = f"%{search}%"
             query = query.where(
                 or_(
-                    Prophecy.title.ilike(pattern),
-                    Prophecy.description.ilike(pattern),
-                    Prophecy.notes.ilike(pattern),
+                    Prophecy.title.ilike(pattern),  # type: ignore[attr-defined]
+                    Prophecy.description.ilike(pattern),  # type: ignore[attr-defined]
+                    Prophecy.notes.ilike(pattern),  # type: ignore[union-attr, attr-defined]
                 )
             )
 
@@ -120,8 +121,8 @@ async def get_prophecy(
     # Get connections where this prophecy is source or target
     conn_query = select(Connection).where(
         or_(
-            Connection.source_prophecy_id == prophecy_id,
-            Connection.target_prophecy_id == prophecy_id,
+            Connection.source_prophecy_id == prophecy_id,  # type: ignore[arg-type]
+            Connection.target_prophecy_id == prophecy_id,  # type: ignore[arg-type]
         )
     )
     conn_result = await session.exec(conn_query)

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import app.models  # noqa: F401 — ensure all models are registered with SQLModel metadata
+import app.models as _models  # noqa: F401 — ensure all models are registered with SQLModel metadata
 from app.config import settings
 from app.database import async_session, init_db
 from app.errors import (
@@ -58,10 +58,10 @@ app.include_router(predict_router)
 app.include_router(export_router)
 app.include_router(graph_router)
 
-app.add_exception_handler(NotFoundError, not_found_handler)
-app.add_exception_handler(ValidationError, validation_error_handler)
-app.add_exception_handler(AIServiceError, ai_service_handler)
-app.add_exception_handler(RateLimitedError, rate_limited_handler)
+app.add_exception_handler(NotFoundError, not_found_handler)  # type: ignore[arg-type]
+app.add_exception_handler(ValidationError, validation_error_handler)  # type: ignore[arg-type]
+app.add_exception_handler(AIServiceError, ai_service_handler)  # type: ignore[arg-type]
+app.add_exception_handler(RateLimitedError, rate_limited_handler)  # type: ignore[arg-type]
 
 
 @app.get("/health")

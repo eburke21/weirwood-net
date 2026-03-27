@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from app.models import Connection, Prophecy
 
 BOOK_NAMES = {1: "AGOT", 2: "ACOK", 3: "ASOS", 4: "AFFC", 5: "ADWD"}
@@ -17,7 +19,7 @@ def format_prophecy_for_prompt(prophecy: Prophecy) -> str:
     return "\n".join(lines)
 
 
-def format_prophecy_list(prophecies: list[Prophecy]) -> str:
+def format_prophecy_list(prophecies: Sequence[Prophecy]) -> str:
     return "\n\n".join(format_prophecy_for_prompt(p) for p in prophecies)
 
 
@@ -61,7 +63,7 @@ Respond ONLY with valid JSON, no markdown:
 }}"""
 
 
-def build_connection_finder_prompt(target: Prophecy, others: list[Prophecy]) -> str:
+def build_connection_finder_prompt(target: Prophecy, others: Sequence[Prophecy]) -> str:
     return CONNECTION_FINDER_TEMPLATE.format(
         target_block=format_prophecy_for_prompt(target),
         others_block=format_prophecy_list(others),
@@ -104,7 +106,7 @@ Respond ONLY with valid JSON, no markdown:
 }}"""
 
 
-def build_fulfillment_prompt(event_description: str, prophecies: list[Prophecy]) -> str:
+def build_fulfillment_prompt(event_description: str, prophecies: Sequence[Prophecy]) -> str:
     return FULFILLMENT_TEMPLATE.format(
         event_description=event_description,
         prophecies_block=format_prophecy_list(prophecies),
@@ -139,7 +141,7 @@ Write a structured analysis (aim for 300-500 words):
 4. Wildcard possibility (low probability but textually supported)"""
 
 
-def format_connections_for_prompt(connections: list[Connection], prophecies_by_id: dict[int, Prophecy]) -> str:
+def format_connections_for_prompt(connections: Sequence[Connection], prophecies_by_id: dict[int, Prophecy]) -> str:
     if not connections:
         return "No connections analyzed yet."
     lines = []
@@ -150,7 +152,7 @@ def format_connections_for_prompt(connections: list[Connection], prophecies_by_i
     return "\n".join(lines)
 
 
-def build_prediction_single_prompt(prophecy: Prophecy, connections: list[Connection], prophecies_by_id: dict[int, Prophecy]) -> str:
+def build_prediction_single_prompt(prophecy: Prophecy, connections: Sequence[Connection], prophecies_by_id: dict[int, Prophecy]) -> str:
     return PREDICTION_SINGLE_TEMPLATE.format(
         prophecy_block=format_prophecy_for_prompt(prophecy),
         connections_block=format_connections_for_prompt(connections, prophecies_by_id),
@@ -181,7 +183,7 @@ Rules:
 - Aim for 1500-2500 words total"""
 
 
-def build_prediction_global_prompt(prophecies: list[Prophecy], connections: list[Connection], prophecies_by_id: dict[int, Prophecy]) -> str:
+def build_prediction_global_prompt(prophecies: Sequence[Prophecy], connections: Sequence[Connection], prophecies_by_id: dict[int, Prophecy]) -> str:
     return PREDICTION_GLOBAL_TEMPLATE.format(
         prophecies_block=format_prophecy_list(prophecies),
         connections_block=format_connections_for_prompt(connections, prophecies_by_id),

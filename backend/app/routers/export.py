@@ -53,8 +53,8 @@ async def export_prophecy(
     conn_result = await session.exec(
         select(Connection).where(
             or_(
-                Connection.source_prophecy_id == prophecy_id,
-                Connection.target_prophecy_id == prophecy_id,
+                Connection.source_prophecy_id == prophecy_id,  # type: ignore[arg-type]
+                Connection.target_prophecy_id == prophecy_id,  # type: ignore[arg-type]
             )
         )
     )

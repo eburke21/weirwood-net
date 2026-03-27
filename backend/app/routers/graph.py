@@ -27,7 +27,7 @@ async def get_graph_data(
 
     result = await session.exec(prophecy_query)
     prophecies = result.all()
-    node_ids = {p.id for p in prophecies}
+    node_ids = {p.id for p in prophecies if p.id is not None}
 
     # Build edges (only where both ends are in the filtered node set)
     edge_query = select(Connection).where(Connection.confidence >= min_confidence)
@@ -55,7 +55,7 @@ async def get_graph_data(
             "status": p.status,
             "book": p.source_book,
             "source_character": p.source_character,
-            "connection_count": connection_counts.get(p.id, 0),
+            "connection_count": connection_counts.get(p.id, 0) if p.id is not None else 0,
         }
         for p in prophecies
     ]

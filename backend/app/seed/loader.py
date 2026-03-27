@@ -35,7 +35,8 @@ async def _seed_prophecies(session: AsyncSession) -> None:
     await session.commit()
 
     # Populate FTS index
-    await session.exec(
+    # Use SQLAlchemy's execute() for raw SQL — SQLModel's exec() only accepts Select
+    await session.execute(  # type: ignore[arg-type]
         text("INSERT INTO prophecies_fts(rowid, title, description, notes) SELECT id, title, description, notes FROM prophecies")
     )
     await session.commit()
