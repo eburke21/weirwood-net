@@ -1,5 +1,5 @@
 import {
-  Heading, Text, VStack, Box, SimpleGrid, Badge, Flex, HStack,
+  Heading, Text, VStack, Box, SimpleGrid, Badge,
   Separator,
 } from "@chakra-ui/react";
 import { Table } from "@chakra-ui/react";

@@ -3,7 +3,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_session
-from app.models import Prophecy, Connection, ProphecyType, ProphecyStatus
+from app.models import Connection, Prophecy, ProphecyStatus, ProphecyType
 
 router = APIRouter(prefix="/api/v1/graph", tags=["graph"])
 

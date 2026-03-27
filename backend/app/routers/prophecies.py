@@ -1,13 +1,13 @@
 import logging
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, or_, literal_column, text
+from sqlalchemy import func, literal_column, or_, text
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_session
 from app.errors import NotFoundError
-from app.models import Prophecy, ProphecyType, ProphecyStatus, Connection
+from app.models import Connection, Prophecy, ProphecyStatus, ProphecyType
 
 logger = logging.getLogger(__name__)
 

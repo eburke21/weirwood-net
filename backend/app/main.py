@@ -3,21 +3,27 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import app.models  # noqa: F401 — ensure all models are registered with SQLModel metadata
 from app.config import settings
-from app.database import init_db, async_session
+from app.database import async_session, init_db
 from app.errors import (
-    NotFoundError, ValidationError, AIServiceError, RateLimitedError,
-    not_found_handler, validation_error_handler, ai_service_handler, rate_limited_handler,
+    AIServiceError,
+    NotFoundError,
+    RateLimitedError,
+    ValidationError,
+    ai_service_handler,
+    not_found_handler,
+    rate_limited_handler,
+    validation_error_handler,
 )
-from app.seed.loader import seed_database
-from app.routers.prophecies import router as prophecies_router
-from app.routers.events import router as events_router
-from app.routers.connections import router as connections_router
 from app.routers.analyze import router as analyze_router
-from app.routers.predict import router as predict_router
+from app.routers.connections import router as connections_router
+from app.routers.events import router as events_router
 from app.routers.export import router as export_router
 from app.routers.graph import router as graph_router
-import app.models  # noqa: F401 — ensure all models are registered with SQLModel metadata
+from app.routers.predict import router as predict_router
+from app.routers.prophecies import router as prophecies_router
+from app.seed.loader import seed_database
 
 
 @asynccontextmanager

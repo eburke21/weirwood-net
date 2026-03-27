@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import Prophecy, Event
+from app.models import Event, Prophecy
 
 logger = logging.getLogger(__name__)
 

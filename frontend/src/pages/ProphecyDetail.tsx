@@ -89,11 +89,10 @@ function ConnectionsPanel({ prophecyId }: { prophecyId: number }) {
         if (!response.ok || !response.body) return;
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = "";
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          buffer += decoder.decode(value, { stream: true });
+          decoder.decode(value, { stream: true });
         }
         // After regeneration, invalidate cache
         queryClient.invalidateQueries({ queryKey: ["connections", prophecyId] });
@@ -247,13 +246,13 @@ function SpokeGraphSection({ prophecyId, prophecyTitle, prophecyType }: { prophe
   );
 }
 
-function PredictionPanel({ prophecyId, prophecyTitle }: { prophecyId: number; prophecyTitle: string }) {
+function PredictionPanel({ prophecyId }: { prophecyId: number; prophecyTitle: string }) {
   const sseOptions = useMemo(() => ({
     endpoint: `/api/v1/predict/prophecy/${prophecyId}`,
     method: "POST" as const,
   }), [prophecyId]);
 
-  const { events, isStreaming, isComplete, error, start } = useSSE(sseOptions);
+  const { events, isStreaming, error, start } = useSSE(sseOptions);
 
   const statusMessage = events.find((e) => e.event === "status")?.data?.message as string | undefined;
   const accumulatedText = events

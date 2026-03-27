@@ -9,7 +9,6 @@ import { useEvents } from "../api/events";
 import { useSSE } from "../hooks/useSSE";
 import StreamingText from "../components/shared/StreamingText";
 import ConfidenceBadge from "../components/shared/ConfidenceBadge";
-import type { ConnectionType } from "../types";
 
 const FULFILLMENT_COLORS: Record<string, string> = {
   literal: "green",

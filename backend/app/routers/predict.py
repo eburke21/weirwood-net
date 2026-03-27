@@ -3,7 +3,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_session
 from app.services.streaming import create_sse_response
-from app.services.weirwood import predict_single, predict_global
+from app.services.weirwood import predict_global, predict_single
 
 router = APIRouter(prefix="/api/v1/predict", tags=["predictions"])
 

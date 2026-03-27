@@ -8,7 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_session
 from app.errors import NotFoundError
-from app.models import Prophecy, Connection, AnalysisCache
+from app.models import AnalysisCache, Connection, Prophecy
 from app.services.prompts import BOOK_NAMES
 
 router = APIRouter(prefix="/api/v1/export", tags=["export"])

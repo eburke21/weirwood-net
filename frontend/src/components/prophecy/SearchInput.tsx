@@ -1,4 +1,4 @@
-import { Input, Box, IconButton, Flex } from "@chakra-ui/react";
+import { Input, IconButton, Flex } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDebounce } from "../../hooks/useDebounce";

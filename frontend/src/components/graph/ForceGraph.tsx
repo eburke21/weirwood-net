@@ -53,10 +53,10 @@ export default function ForceGraph({ data, width, height, onNodeClick }: Props) 
 
     // Force simulation
     const simulation = d3.forceSimulation(nodes)
-      .force("link", d3.forceLink(edges).id((d: any) => d.id).distance(120))
+      .force("link", d3.forceLink(edges).id((d: d3.SimulationNodeDatum) => (d as SimNode).id).distance(120))
       .force("charge", d3.forceManyBody().strength(-200))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collide", d3.forceCollide().radius((d: any) => nodeRadiusScale(d.connection_count) + 5))
+      .force("collide", d3.forceCollide().radius((d: d3.SimulationNodeDatum) => nodeRadiusScale((d as SimNode).connection_count) + 5))
       .alphaDecay(0.02);
 
     // Edges
@@ -113,7 +113,7 @@ export default function ForceGraph({ data, width, height, onNodeClick }: Props) 
           if (!event.active) simulation.alphaTarget(0);
           d.fx = null;
           d.fy = null;
-        })
+        }) as unknown as (selection: d3.Selection<d3.BaseType | SVGCircleElement, SimNode, SVGGElement, unknown>) => void
       );
 
     // Labels (only for connected nodes)
@@ -131,18 +131,18 @@ export default function ForceGraph({ data, width, height, onNodeClick }: Props) 
     // Tick update
     simulation.on("tick", () => {
       edgeSelection
-        .attr("x1", (d: any) => d.source.x)
-        .attr("y1", (d: any) => d.source.y)
-        .attr("x2", (d: any) => d.target.x)
-        .attr("y2", (d: any) => d.target.y);
+        .attr("x1", (d) => ((d.source as unknown as SimNode).x ?? 0))
+        .attr("y1", (d) => ((d.source as unknown as SimNode).y ?? 0))
+        .attr("x2", (d) => ((d.target as unknown as SimNode).x ?? 0))
+        .attr("y2", (d) => ((d.target as unknown as SimNode).y ?? 0));
 
       nodeSelection
-        .attr("cx", (d: any) => d.x)
-        .attr("cy", (d: any) => d.y);
+        .attr("cx", (d) => (d.x ?? 0))
+        .attr("cy", (d) => (d.y ?? 0));
 
       labelSelection
-        .attr("x", (d: any) => d.x)
-        .attr("y", (d: any) => d.y);
+        .attr("x", (d) => (d.x ?? 0))
+        .attr("y", (d) => (d.y ?? 0));
     });
 
     return () => { simulation.stop(); };

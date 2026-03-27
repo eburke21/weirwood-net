@@ -1,11 +1,10 @@
-import pytest
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
-from httpx import AsyncClient, ASGITransport
 
 # Create test engine and session factory BEFORE importing app modules
 # that depend on app.database (the module-level engine/async_session).
@@ -35,8 +34,8 @@ import app.database  # noqa: E402
 app.database.engine = test_engine
 app.database.async_session = test_async_session
 
-from app.main import app as fastapi_app  # noqa: E402
 from app.database import get_session  # noqa: E402
+from app.main import app as fastapi_app  # noqa: E402
 from app.seed.loader import seed_database  # noqa: E402
 
 # Override the dependency so routers use the test session

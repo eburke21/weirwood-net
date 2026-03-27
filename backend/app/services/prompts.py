@@ -1,4 +1,4 @@
-from app.models import Prophecy, Connection
+from app.models import Connection, Prophecy
 
 BOOK_NAMES = {1: "AGOT", 2: "ACOK", 3: "ASOS", 4: "AFFC", 5: "ADWD"}
 

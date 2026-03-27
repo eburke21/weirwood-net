@@ -1,5 +1,5 @@
 import {
-  Heading, Text, VStack, Flex, Button, Box, Textarea,
+  Heading, Text, VStack, Flex, Button, Box,
 } from "@chakra-ui/react";
 import { NativeSelectField, NativeSelectRoot } from "@chakra-ui/react";
 import { Alert } from "@chakra-ui/react";

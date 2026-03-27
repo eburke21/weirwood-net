@@ -1,4 +1,3 @@
-import * as d3 from "d3";
 import type { ProphecyType, ConnectionType } from "../../types";
 
 // Node color by prophecy type (colorblind-friendly categorical palette)

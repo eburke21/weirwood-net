@@ -10,15 +10,15 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.config import settings
 from app.errors import NotFoundError
-from app.models import Prophecy, Connection, ConnectionType, AnalysisCache, AnalysisType, Event
+from app.models import AnalysisCache, Connection, ConnectionType, Event, Prophecy
 from app.services.prompts import (
     CONNECTION_FINDER_SYSTEM,
+    FULFILLMENT_SYSTEM,
+    PREDICTION_SYSTEM,
     build_connection_finder_prompt,
     build_fulfillment_prompt,
-    FULFILLMENT_SYSTEM,
-    build_prediction_single_prompt,
-    PREDICTION_SYSTEM,
     build_prediction_global_prompt,
+    build_prediction_single_prompt,
 )
 from app.services.streaming import sse_event
 
