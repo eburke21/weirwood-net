@@ -1,4 +1,4 @@
-# Weirwood.net
+# 🪾 Weirwood.net
 
 **ASOIAF Prophecy Tracker & Connection Engine** — A literary analysis tool that catalogs every known prophecy in *A Song of Ice and Fire*, tracks fulfillment status, and uses AI to surface non-obvious relationships between them.
 
