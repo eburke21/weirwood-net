@@ -7,7 +7,7 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useEvents } from "../api/events";
 import { useSSE } from "../hooks/useSSE";
-import StreamingText from "../components/shared/StreamingText";
+import ThinkingIndicator from "../components/shared/ThinkingIndicator";
 import ConfidenceBadge from "../components/shared/ConfidenceBadge";
 
 const FULFILLMENT_COLORS: Record<string, string> = {
@@ -140,9 +140,11 @@ export default function FulfillmentAnalyzer() {
         )}
       </Box>
 
-      {/* Streaming status */}
-      {isStreaming && statusMessage && (
-        <StreamingText text={statusMessage} isStreaming={true} />
+      {/* Thinking state — waiting for first match */}
+      {isStreaming && matchEvents.length === 0 && (
+        <ThinkingIndicator
+          label={statusMessage ?? "Cross-referencing prophecies..."}
+        />
       )}
 
       {/* Error */}

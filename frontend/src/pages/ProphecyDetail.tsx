@@ -12,7 +12,7 @@ import { useSSE } from "../hooks/useSSE";
 import StatusBadge from "../components/shared/StatusBadge";
 import BookBadge from "../components/shared/BookBadge";
 import TypeIcon from "../components/shared/TypeIcon";
-import StreamingText from "../components/shared/StreamingText";
+import ThinkingIndicator from "../components/shared/ThinkingIndicator";
 import ConnectionCard from "../components/connections/ConnectionCard";
 import SpokeGraph from "../components/connections/SpokeGraph";
 import type { ConnectionType } from "../types";
@@ -133,9 +133,11 @@ function ConnectionsPanel({ prophecyId }: { prophecyId: number }) {
         )}
       </Flex>
 
-      {/* Streaming status */}
-      {isStreaming && statusMessage && (
-        <StreamingText text={statusMessage} isStreaming={true} />
+      {/* Thinking state — waiting for first connection */}
+      {isStreaming && connectionEvents.length === 0 && (
+        <ThinkingIndicator
+          label={statusMessage ?? "Searching for connections across the prophecies..."}
+        />
       )}
 
       {/* SSE error */}
@@ -271,8 +273,10 @@ function PredictionPanel({ prophecyId }: { prophecyId: number; prophecyTitle: st
         )}
       </Flex>
 
-      {isStreaming && statusMessage && !accumulatedText && (
-        <StreamingText text={statusMessage} isStreaming={true} />
+      {isStreaming && !accumulatedText && (
+        <ThinkingIndicator
+          label={statusMessage ?? "Consulting the three-eyed raven..."}
+        />
       )}
 
       {error && (
