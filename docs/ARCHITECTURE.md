@@ -2,6 +2,8 @@
 
 ## System Overview
 
+![Weirwood.net architecture diagram](./assets/weirwood-net-architecture.png)
+
 ```mermaid
 flowchart TB
     subgraph Browser["Browser — React 18 + TypeScript"]
@@ -65,12 +67,18 @@ flowchart TB
 
 ### Request flow at a glance
 
+![Weirwood.net request flow](./assets/weirwood-net-request-lifecycle.png)
+
+
 1. Browser fires **REST** for list/detail reads (cached by TanStack Query) or **SSE POST** for AI endpoints
 2. FastAPI middleware chain — CORS → slowapi (throttle) — before hitting the router
 3. Router delegates to `services/weirwood.py`; before any Claude call, `spend.py` checks the daily USD cap; after, it records token usage
 4. Results stream back to the browser one SSE event at a time, while also being persisted to `analysis_cache` so future requests replay instantly
 
 ## Data Model
+
+![Weirwood.net data model](./assets/weirwood-net-architecture.png)
+
 
 | Table | Purpose | Key Fields |
 |-------|---------|-----------|

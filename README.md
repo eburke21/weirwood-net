@@ -44,6 +44,7 @@ Weirwood.net is a searchable, filterable prophecy database with AI-powered conne
 | Infrastructure | Docker Compose | Single-command deployment |
 
 ## Architecture
+![Weirwood.net architecture diagram](.docs/assets/weirwood-net-architecture.png)
 
 ```
 Frontend (React)          Backend (FastAPI)          External
