@@ -80,4 +80,23 @@ describe('parseSSEEvents', () => {
     expect(events[0]).toEqual({ event: 'good', data: { a: 1 } });
     expect(events[1]).toEqual({ event: 'also_good', data: { b: 2 } });
   });
+
+  it('parses events with CRLF line endings (sse-starlette default)', () => {
+    // Regression: our backend (sse-starlette via uvicorn) emits \r\n line
+    // endings. The parser must normalize to LF before splitting.
+    const text =
+      'event: status\r\ndata: {"message":"hello"}\r\n\r\n' +
+      'event: chunk\r\ndata: {"text":"world"}\r\n\r\n';
+    const events = parseSSEEvents(text);
+    expect(events).toEqual([
+      { event: 'status', data: { message: 'hello' } },
+      { event: 'chunk', data: { text: 'world' } },
+    ]);
+  });
+
+  it('parses events with bare CR line endings (old Mac style)', () => {
+    const text = 'event: chunk\rdata: {"x":1}\r\r';
+    const events = parseSSEEvents(text);
+    expect(events).toEqual([{ event: 'chunk', data: { x: 1 } }]);
+  });
 });

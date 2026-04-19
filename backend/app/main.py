@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 import app.models as _models  # noqa: F401 — ensure all models are registered with SQLModel metadata
 from app.config import settings
@@ -16,6 +18,7 @@ from app.errors import (
     rate_limited_handler,
     validation_error_handler,
 )
+from app.rate_limit import limiter, rate_limit_exceeded_handler
 from app.routers.analyze import router as analyze_router
 from app.routers.connections import router as connections_router
 from app.routers.events import router as events_router
@@ -41,6 +44,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -62,6 +68,7 @@ app.add_exception_handler(NotFoundError, not_found_handler)  # type: ignore[arg-
 app.add_exception_handler(ValidationError, validation_error_handler)  # type: ignore[arg-type]
 app.add_exception_handler(AIServiceError, ai_service_handler)  # type: ignore[arg-type]
 app.add_exception_handler(RateLimitedError, rate_limited_handler)  # type: ignore[arg-type]
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
 
 @app.get("/health")

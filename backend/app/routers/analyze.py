@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_session
+from app.rate_limit import AI_GENERATE_LIMIT, limiter
 from app.services.streaming import create_sse_response
 from app.services.weirwood import analyze_fulfillment
 
@@ -15,7 +16,9 @@ class FulfillmentRequest(BaseModel):
 
 
 @router.post("/fulfillment")
+@limiter.limit(AI_GENERATE_LIMIT)
 async def fulfillment_analysis(
+    request: Request,
     body: FulfillmentRequest,
     session: AsyncSession = Depends(get_session),
 ):

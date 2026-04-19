@@ -6,7 +6,7 @@ import { Alert } from "@chakra-ui/react";
 import { useState, useMemo } from "react";
 import { useProphecies } from "../api/prophecies";
 import { useSSE } from "../hooks/useSSE";
-import StreamingText from "../components/shared/StreamingText";
+import ThinkingIndicator from "../components/shared/ThinkingIndicator";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
@@ -132,9 +132,16 @@ export default function TWOWPredictions() {
         </Box>
       )}
 
-      {/* Status */}
-      {active.isStreaming && statusMessage && !accumulatedText && (
-        <StreamingText text={statusMessage} isStreaming={true} />
+      {/* Thinking state — waiting for first chunk */}
+      {active.isStreaming && !accumulatedText && (
+        <ThinkingIndicator
+          label={
+            statusMessage ??
+            (mode === "global"
+              ? "Weaving the global prophecy report..."
+              : "Consulting the three-eyed raven...")
+          }
+        />
       )}
 
       {/* Error */}

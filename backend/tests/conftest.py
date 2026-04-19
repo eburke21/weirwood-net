@@ -41,6 +41,10 @@ from app.seed.loader import seed_database  # noqa: E402
 # Override the dependency so routers use the test session
 fastapi_app.dependency_overrides[get_session] = get_test_session
 
+# Disable rate limiting during tests — the per-minute caps on AI endpoints are
+# deliberately tight for production but would cause flaky failures under pytest.
+fastapi_app.state.limiter.enabled = False
+
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def _setup_db():
