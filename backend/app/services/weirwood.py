@@ -10,7 +10,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.config import settings
-from app.errors import NotFoundError
+from app.errors import AIServiceError, NotFoundError
 from app.models import AnalysisCache, Connection, ConnectionType, Event, Prophecy
 from app.services.prompts import (
     CONNECTION_FINDER_SYSTEM,
@@ -21,6 +21,7 @@ from app.services.prompts import (
     build_prediction_global_prompt,
     build_prediction_single_prompt,
 )
+from app.services.spend import check_spend_budget, record_spend
 from app.services.streaming import sse_event
 
 logger = logging.getLogger(__name__)
@@ -126,12 +127,26 @@ async def find_connections(prophecy_id: int, session: AsyncSession) -> AsyncGene
     valid_ids = {p.id for p in others}
 
     try:
+        await check_spend_budget(session)
+    except AIServiceError as e:
+        yield sse_event("error", {"message": e.detail})
+        return
+
+    try:
         client = _get_client()
         response = await client.messages.create(
             model=settings.CLAUDE_MODEL,
             max_tokens=4096,
             system=CONNECTION_FINDER_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
+        )
+
+        await record_spend(
+            endpoint="connections",
+            model=settings.CLAUDE_MODEL,
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+            session=session,
         )
 
         # Extract text content
@@ -274,12 +289,26 @@ async def analyze_fulfillment(
     valid_ids = {p.id for p in prophecies}
 
     try:
+        await check_spend_budget(session)
+    except AIServiceError as e:
+        yield sse_event("error", {"message": e.detail})
+        return
+
+    try:
         client = _get_client()
         response = await client.messages.create(
             model=settings.CLAUDE_MODEL,
             max_tokens=4096,
             system=FULFILLMENT_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
+        )
+
+        await record_spend(
+            endpoint="fulfillment",
+            model=settings.CLAUDE_MODEL,
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+            session=session,
         )
 
         first_block = response.content[0]
@@ -363,6 +392,12 @@ async def predict_single(prophecy_id: int, session: AsyncSession) -> AsyncGenera
     prompt = build_prediction_single_prompt(prophecy, connections, prophecies_by_id)
 
     try:
+        await check_spend_budget(session)
+    except AIServiceError as e:
+        yield sse_event("error", {"message": e.detail})
+        return
+
+    try:
         client = _get_client()
         full_text = ""
         async with client.messages.stream(
@@ -374,6 +409,16 @@ async def predict_single(prophecy_id: int, session: AsyncSession) -> AsyncGenera
             async for text in stream.text_stream:
                 full_text += text
                 yield sse_event("chunk", {"text": text})
+
+            final_message = await stream.get_final_message()
+
+        await record_spend(
+            endpoint="prediction_single",
+            model=settings.CLAUDE_MODEL,
+            input_tokens=final_message.usage.input_tokens,
+            output_tokens=final_message.usage.output_tokens,
+            session=session,
+        )
 
         # Cache the full result
         await store_analysis(
@@ -425,6 +470,12 @@ async def predict_global(session: AsyncSession) -> AsyncGenerator:
     prompt = build_prediction_global_prompt(prophecies, connections, prophecies_by_id)
 
     try:
+        await check_spend_budget(session)
+    except AIServiceError as e:
+        yield sse_event("error", {"message": e.detail})
+        return
+
+    try:
         client = _get_client()
         full_text = ""
         async with client.messages.stream(
@@ -436,6 +487,16 @@ async def predict_global(session: AsyncSession) -> AsyncGenerator:
             async for text in stream.text_stream:
                 full_text += text
                 yield sse_event("chunk", {"text": text})
+
+            final_message = await stream.get_final_message()
+
+        await record_spend(
+            endpoint="prediction_global",
+            model=settings.CLAUDE_MODEL,
+            input_tokens=final_message.usage.input_tokens,
+            output_tokens=final_message.usage.output_tokens,
+            session=session,
+        )
 
         # Cache the full result
         await store_analysis(

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from sqlalchemy import or_
 from sqlmodel import select
@@ -6,6 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_session
 from app.models import Connection
+from app.rate_limit import AI_GENERATE_LIMIT, limiter
 from app.services.streaming import create_sse_response
 from app.services.weirwood import find_connections, get_cached_connections
 
@@ -30,7 +31,9 @@ async def get_connections(
 
 
 @router.post("/{prophecy_id}/connections/generate")
+@limiter.limit(AI_GENERATE_LIMIT)
 async def generate_connections(
+    request: Request,
     prophecy_id: int,
     body: GenerateRequest = GenerateRequest(),
     session: AsyncSession = Depends(get_session),
