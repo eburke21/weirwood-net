@@ -52,6 +52,31 @@ export function useSSE({ endpoint, method = "POST", body }: UseSSEOptions): UseS
     }
 
     (async () => {
+      // Flush one block of buffered SSE text into state. Returns the
+      // bytes consumed so the caller can advance the buffer.
+      const processBlocks = (text: string): string => {
+        // Normalize CRLF → LF per the SSE spec (WHATWG): servers may use
+        // "\r\n\r\n", "\n\n", or "\r\r" as the event terminator. Strip all
+        // CRs so everything downstream can split on "\n\n" only.
+        const normalized = text.replace(/\r\n?/g, "\n");
+        const parts = normalized.split("\n\n");
+        const leftover = parts.pop() ?? "";
+
+        for (const part of parts) {
+          if (!part.trim()) continue;
+          const parsed = parseSSEEvents(part + "\n\n");
+          for (const evt of parsed) {
+            if (evt.event === "complete") {
+              setIsComplete(true);
+            } else if (evt.event === "error") {
+              setError((evt.data as { message?: string }).message ?? "Unknown error");
+            }
+            setEvents((prev) => [...prev, evt]);
+          }
+        }
+        return leftover;
+      };
+
       try {
         const response = await fetch(`${API_BASE}${endpoint}`, fetchOptions);
         if (!response.ok) {
@@ -74,26 +99,13 @@ export function useSSE({ endpoint, method = "POST", body }: UseSSEOptions): UseS
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-
           buffer += decoder.decode(value, { stream: true });
-
-          // Process complete events (separated by double newline)
-          const parts = buffer.split("\n\n");
-          buffer = parts.pop() ?? "";
-
-          for (const part of parts) {
-            if (!part.trim()) continue;
-            const parsed = parseSSEEvents(part + "\n\n");
-            for (const evt of parsed) {
-              if (evt.event === "complete") {
-                setIsComplete(true);
-              } else if (evt.event === "error") {
-                setError((evt.data as { message?: string }).message ?? "Unknown error");
-              }
-              setEvents((prev) => [...prev, evt]);
-            }
-          }
+          buffer = processBlocks(buffer);
         }
+
+        // Flush any trailing bytes (servers that omit a final blank line).
+        const tail = buffer + decoder.decode();
+        if (tail.trim()) processBlocks(tail + "\n\n");
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           setError((err as Error).message ?? "Stream failed");
