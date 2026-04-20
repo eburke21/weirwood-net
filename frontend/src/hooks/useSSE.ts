@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { parseSSEEvents, type SSEEvent } from "../api/sse";
-
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+import { API_BASE } from "../config";
 
 interface UseSSEOptions {
   endpoint: string;

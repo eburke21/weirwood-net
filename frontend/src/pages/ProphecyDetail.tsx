@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import { useProphecy } from "../api/prophecies";
 import { fetchApi } from "../api/client";
 import { useSSE } from "../hooks/useSSE";
+import { API_BASE } from "../config";
 import StatusBadge from "../components/shared/StatusBadge";
 import BookBadge from "../components/shared/BookBadge";
 import TypeIcon from "../components/shared/TypeIcon";
@@ -79,7 +80,6 @@ function ConnectionsPanel({ prophecyId }: { prophecyId: number }) {
     if (forceRegenerate) {
       // For regenerate, we need to modify the body
       const controller = new AbortController();
-      const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
       fetch(`${API_BASE}/api/v1/prophecies/${prophecyId}/connections/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
@@ -426,7 +426,6 @@ export default function ProphecyDetail() {
           variant="ghost"
           size="sm"
           onClick={() => {
-            const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
             window.open(`${API_BASE}/api/v1/export/prophecy/${prophecyId}`, "_blank");
           }}
         >
