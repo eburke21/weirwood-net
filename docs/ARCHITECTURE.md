@@ -1,5 +1,22 @@
 # Architecture — Weirwood.net
 
+## 🛠️ Tech Stack
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| Frontend | React 18 + TypeScript | UI framework with strict typing |
+| Components | Chakra UI v3 | Component library + theming |
+| Data Fetching | TanStack Query | Server state, caching, SSE consumption |
+| Visualization | D3.js (direct) | Force-directed graph + spoke views |
+| Animations | Framer Motion | Page transitions, card stagger |
+| Backend | FastAPI + Python 3.12 | REST API + SSE streaming |
+| ORM | SQLModel | SQLAlchemy + Pydantic unified |
+| Database | SQLite + FTS5 | Zero-config storage + full-text search |
+| AI | Anthropic Claude API | Connection analysis, predictions |
+| Streaming | SSE (sse-starlette) | Real-time AI response delivery |
+| Package Mgmt | uv (Python), npm (JS) | Fast dependency management |
+| Infrastructure | Docker Compose | Single-command deployment |
+
 ## System Overview
 
 ![Weirwood.net architecture diagram](./assets/weirwood-net-architecture.png)

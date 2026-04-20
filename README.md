@@ -4,7 +4,7 @@
 
 Built with React, FastAPI, D3.js, and Claude AI. Demonstrates entity extraction, relationship mapping, streaming AI responses, and graph visualization.
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 git clone https://github.com/your-username/weirwood-net.git
@@ -13,20 +13,20 @@ cp .env.example .env           # Add your ANTHROPIC_API_KEY
 docker compose up --build      # Open http://localhost:5173
 ```
 
-## What It Does
+## 📖 What It Does
 
 Weirwood.net is a searchable, filterable prophecy database with AI-powered connection discovery. Browse 75 hand-curated prophecies across all 5 books, find thematic links between them using Claude AI, analyze which prophecies a given event fulfills, and generate TWOW predictions — all with streaming responses and persistent caching.
 
-## Features
+## ✨ Features
 
-- **Browse & Filter** — Dashboard with card/table views, full-text search (FTS5), filtering by book, type, status, character
-- **AI Connection Finder** — Click "Find Connections" on any prophecy to discover thematic parallels, shared fulfillments, contradictions, and sequential links via Claude AI
-- **Fulfillment Analyzer** — Describe any event (real or hypothetical) and see which prophecies it might fulfill, with confidence scores and reasoning
-- **TWOW Predictions** — Per-prophecy predictions and comprehensive global reports for The Winds of Winter, with real-time token streaming
-- **Graph Explorer** — D3 force-directed network graph showing prophecy connections. Nodes colored by type, sized by connection count. Zoom, pan, drag, filter.
-- **Export** — Download any prophecy's full analysis (connections + predictions) as Markdown
+- 🔍 **Browse & Filter** — Dashboard with card/table views, full-text search (FTS5), filtering by book, type, status, character
+- 🕸️ **AI Connection Finder** — Click "Find Connections" on any prophecy to discover thematic parallels, shared fulfillments, contradictions, and sequential links via Claude AI
+- ⚖️ **Fulfillment Analyzer** — Describe any event (real or hypothetical) and see which prophecies it might fulfill, with confidence scores and reasoning
+- ❄️ **TWOW Predictions** — Per-prophecy predictions and comprehensive global reports for The Winds of Winter, with real-time token streaming
+- 🌐 **Graph Explorer** — D3 force-directed network graph showing prophecy connections. Nodes colored by type, sized by connection count. Zoom, pan, drag, filter.
+- 📥 **Export** — Download any prophecy's full analysis (connections + predictions) as Markdown
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
@@ -43,7 +43,7 @@ Weirwood.net is a searchable, filterable prophecy database with AI-powered conne
 | Package Mgmt | uv (Python), npm (JS) | Fast dependency management |
 | Infrastructure | Docker Compose | Single-command deployment |
 
-## Architecture
+## 🏗️ Architecture
 ![Weirwood.net architecture diagram](.docs/assets/weirwood-net-architecture.png)
 
 ```
@@ -64,9 +64,9 @@ Frontend (React)          Backend (FastAPI)          External
 - **Persisted connections with refresh** — AI-generated connections are stored in SQLite for instant load on revisit. "Regenerate" button allows fresh analysis.
 - **D3.js direct, not a wrapper** — Full control over force simulation, zoom, drag, tooltips, and visual encoding.
 
-## Development
+## 💻 Development
 
-### Without Docker
+### ⚙️ Without Docker
 
 ```bash
 # Backend
@@ -80,7 +80,7 @@ npm install
 npm run dev
 ```
 
-### Running Tests
+### 🧪 Running Tests
 
 ```bash
 # Backend tests
@@ -94,25 +94,24 @@ cd backend && uv run mypy app/ --ignore-missing-imports
 cd frontend && npx tsc --noEmit
 ```
 
-### Adding Prophecies
+### 📜 Adding Prophecies
 
 Edit `backend/app/seed/prophecies.json` following the existing entry format. Delete `backend/data/weirwood.db` and restart the backend to re-seed.
 
 Required fields: `title`, `description`, `source_character`, `source_chapter`, `source_book` (1-5), `prophecy_type`, `status`, `subject_characters` (array), `keywords` (array).
 
-## AI Prompt Design
+## 🔮 AI Prompt Design
 
 The AI prompts use **evidence-constrained reasoning** — Claude is instructed to cite specific chapters and scenes, not speculate beyond the text. Connection types (thematic_parallel, shared_fulfillment, contradiction, sequential, reinterpretation) provide structured output that can be validated and stored.
 
 All AI responses are validated before display: prophecy IDs checked against the database, confidence values clamped to 0-1, connection types verified against the enum. Invalid results are silently dropped.
 
-## Documentation
+## 📚 Documentation
 
 - [Architecture](docs/ARCHITECTURE.md) — System design, data model, API endpoints
 - [Seed Data](docs/SEED_DATA.md) — Data curation methodology and quality checklist
 - [Prompts](docs/PROMPTS.md) — AI prompt templates with design commentary
-- [Deployment](dev-docs/deploy.md) — Step-by-step deployment instructions
 
-## License
+## 📄 License
 
 MIT — see [LICENSE](LICENSE)
