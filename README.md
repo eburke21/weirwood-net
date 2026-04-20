@@ -26,36 +26,10 @@ Weirwood.net is a searchable, filterable prophecy database with AI-powered conne
 - 🌐 **Graph Explorer** — D3 force-directed network graph showing prophecy connections. Nodes colored by type, sized by connection count. Zoom, pan, drag, filter.
 - 📥 **Export** — Download any prophecy's full analysis (connections + predictions) as Markdown
 
-## 🛠️ Tech Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| Frontend | React 18 + TypeScript | UI framework with strict typing |
-| Components | Chakra UI v3 | Component library + theming |
-| Data Fetching | TanStack Query | Server state, caching, SSE consumption |
-| Visualization | D3.js (direct) | Force-directed graph + spoke views |
-| Animations | Framer Motion | Page transitions, card stagger |
-| Backend | FastAPI + Python 3.12 | REST API + SSE streaming |
-| ORM | SQLModel | SQLAlchemy + Pydantic unified |
-| Database | SQLite + FTS5 | Zero-config storage + full-text search |
-| AI | Anthropic Claude API | Connection analysis, predictions |
-| Streaming | SSE (sse-starlette) | Real-time AI response delivery |
-| Package Mgmt | uv (Python), npm (JS) | Fast dependency management |
-| Infrastructure | Docker Compose | Single-command deployment |
 
 ## 🏗️ Architecture
-![Weirwood.net architecture diagram](.docs/assets/weirwood-net-architecture.png)
-
-```
-Frontend (React)          Backend (FastAPI)          External
-┌─────────────────┐      ┌─────────────────┐      ┌──────────┐
-│ Dashboard       │─────▶│ REST API        │      │ Anthropic│
-│ Detail + AI     │◀─SSE─│ AI Service      │─────▶│ Claude   │
-│ Graph Explorer  │      │ SQLite + FTS5   │      │ API      │
-│ Analyzer        │      │ Analysis Cache  │      └──────────┘
-│ Predictions     │      └─────────────────┘
-└─────────────────┘
-```
+Details and diagrams found in [Architecture](docs/ARCHITECTURE.md)
 
 **Key design decisions:**
 - **SQLite over PostgreSQL** — Dataset is small (~75 prophecies), read-heavy, single-user. SQLite eliminates infrastructure complexity and makes Docker setup trivial.
