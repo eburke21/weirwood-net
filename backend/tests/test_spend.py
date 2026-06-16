@@ -16,7 +16,7 @@ from app.services.spend import (
 
 def test_estimate_cost_sonnet_4():
     # claude-sonnet-4: $3/MTok input, $15/MTok output
-    cost = estimate_cost_usd("claude-sonnet-4-20250514", 1_000_000, 1_000_000)
+    cost = estimate_cost_usd("claude-sonnet-4-6", 1_000_000, 1_000_000)
     assert cost == pytest.approx(18.0)
 
 
@@ -42,7 +42,7 @@ async def test_record_and_read_back_daily_spend():
 
         cost = await record_spend(
             endpoint="test",
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-6",
             input_tokens=100_000,
             output_tokens=50_000,
             session=session,
