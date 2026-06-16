@@ -4,15 +4,17 @@
 
 ASOIAF prophecy tracker & connection engine. FastAPI backend + React frontend monorepo with AI-powered literary analysis via the Anthropic Claude API. Portfolio project.
 
-Detailed spec in `dev-docs/spec.md`, phased implementation plan in `dev-docs/plan.md`, progress log in `dev-docs/progress.md`.
+Detailed spec in `dev-docs/spec.md`, phased plan in `dev-docs/plan.md`, progress log in `dev-docs/progress.md`. These hold the exhaustive API/schema reference — keep this file focused on workflow and non-obvious patterns.
 
-**Current state:** All 8 phases complete. Portfolio-ready. 57 tests passing, CI pipeline, comprehensive docs. Requires `ANTHROPIC_API_KEY` for AI features.
+**Current state:** All 8 phases complete. **Deployed** (Railway backend + Vercel frontend) and portfolio-ready. **65 tests** passing (24 backend / 41 frontend), CI pipeline, comprehensive docs. Requires `ANTHROPIC_API_KEY` for AI features.
 
 ## Architecture
 
 ```
 weirwood-net/
+├── Makefile          # Task runner — the canonical command interface (see below)
 ├── backend/          # FastAPI + Python 3.12+ (managed with uv)
+│   ├── railway.json       # Railway deploy config (Dockerfile build, /health check)
 │   ├── app/
 │   │   ├── main.py        # FastAPI app, lifespan, CORS
 │   │   ├── config.py      # pydantic-settings (reads .env)
@@ -27,9 +29,10 @@ weirwood-net/
 │   └── src/
 │       ├── main.tsx       # Chakra UI v3 Provider + React Query + Router
 │       ├── App.tsx        # Route definitions
+│       ├── config.ts      # Centralized API_BASE (strips trailing slash from VITE_API_URL)
 │       ├── types/         # TS interfaces matching backend models
 │       ├── api/           # fetchApi client + TanStack Query hooks
-│       ├── components/    # layout/, shared/, prophecy/ components
+│       ├── components/    # layout/, shared/, prophecy/, connections/, graph/
 │       ├── pages/         # All 6 pages fully implemented
 │       ├── hooks/         # useDebounce, useSSE
 │       └── theme/         # Custom Chakra system with weirwood tokens
@@ -41,50 +44,27 @@ weirwood-net/
 ## Quick Start
 
 ```bash
-# Option 1: Docker (preferred for full-stack)
-cp .env.example .env
-docker compose up --build
-
-# Option 2: Local development
-# Backend:
-cd backend && uv run uvicorn app.main:app --reload --port 8000
-# Frontend (separate terminal):
-cd frontend && npm run dev
+cp .env.example .env       # add ANTHROPIC_API_KEY
+make up                    # Docker: build + start backend (:8000) + frontend (:5173)
+# or run locally in two terminals:
+make backend-dev           # uvicorn --reload on :8000
+make frontend-dev          # Vite dev server on :5173
 ```
 
 ## Common Commands
 
-### Backend (run from `backend/`)
-```bash
-uv run uvicorn app.main:app --reload --port 8000   # Start dev server
-uv sync                                             # Install/update deps
-uv add <package>                                     # Add a dependency
-uv run pytest -v                                     # Run tests (18 tests)
-uv run ruff check .                                  # Lint
-uv run mypy app/ --ignore-missing-imports            # Type check
-```
+**The `Makefile` is the command interface — prefer `make <target>` over raw `uv`/`npm`.** Run `make help` for the full list. Most-used:
 
-### Frontend (run from `frontend/`)
-```bash
-npm run dev                    # Start Vite dev server (port 5173)
-npm install                    # Install deps
-npx tsc --noEmit               # Type-check without building
-npx vitest run                 # Run tests (39 tests)
-npx eslint src/                # Lint
-```
+| Target | What it does |
+|--------|--------------|
+| `make up` / `make down` / `make logs` | Docker lifecycle |
+| `make test` | Backend pytest + frontend vitest (65 tests) |
+| `make lint` / `make typecheck` | ruff+eslint / mypy+tsc |
+| `make db-reset` | Wipe SQLite DB + restart to re-seed |
+| `make db-shell` / `make db-backup` | SQLite shell / timestamped DB copy |
+| `make spend` | Show today's Claude API spend from `spend_log` |
 
-### Docker
-```bash
-docker compose up --build      # Build and start both services
-docker compose down            # Stop and remove containers
-docker compose logs -f         # Tail logs
-```
-
-### Database
-```bash
-sqlite3 data/weirwood.db ".tables"     # List tables
-sqlite3 data/weirwood.db ".schema"     # Show all schemas
-```
+Raw equivalents (when a Makefile target doesn't fit): backend uses `uv run <cmd>` from `backend/` (never activate the venv manually); frontend uses `npm`/`npx` from `frontend/`.
 
 ## Tech Stack
 
@@ -95,34 +75,22 @@ sqlite3 data/weirwood.db ".schema"     # Show all schemas
 | Database | SQLite (async) | Single file at `data/weirwood.db`, created on startup |
 | AI | Anthropic Claude API | SSE streaming for long analyses (Phase 4+) |
 | Graph viz | D3.js (direct, not a React wrapper) | Force-directed + spoke graph via `useRef` + `useEffect` |
-| Infra | Docker Compose | Single-command startup |
+| Infra | Docker Compose (local) · Railway + Vercel (prod) | Single-command local startup |
 
-## API Endpoints
+## Deployment
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/health` | Health check (`{"status": "ok", "version": "0.1.0"}`) |
-| `GET` | `/api/v1/prophecies` | List prophecies with filtering, sorting, pagination |
-| `GET` | `/api/v1/prophecies/{id}` | Single prophecy with connections array |
-| `GET` | `/api/v1/events` | All pre-seeded events |
-| `GET` | `/api/v1/prophecies/{id}/connections` | Cached connections for a prophecy |
-| `POST` | `/api/v1/prophecies/{id}/connections/generate` | Generate connections via AI (SSE stream) |
-| `POST` | `/api/v1/analyze/fulfillment` | Analyze event against prophecies (SSE stream) |
-| `POST` | `/api/v1/predict/prophecy/{id}` | Per-prophecy TWOW prediction (SSE stream) |
-| `POST` | `/api/v1/predict/global` | Global TWOW predictions report (SSE stream) |
-| `GET` | `/api/v1/export/prophecy/{id}` | Download prophecy analysis as Markdown |
-| `GET` | `/api/v1/graph` | Graph data: nodes + edges + stats (filterable) |
+- **Backend → Railway.** Config in `backend/railway.json`: Dockerfile build, start command binds `--host 0.0.0.0 --port ${PORT:-8000}`, healthcheck on `/health` (90s timeout), restart-on-failure. Railway injects `$PORT` — the server **must** bind it, not a hardcoded 8000.
+- **Frontend → Vercel.** Built with `VITE_API_URL` pointing at the Railway backend URL. `src/config.ts` strips any trailing slash from that env var (Railway/Vercel dashboards copy URLs with one) to avoid `host//api/...` double-slash bugs.
+- **CORS:** set `CORS_ORIGINS` on the backend to include the deployed Vercel origin (defaults to localhost only).
 
-### Prophecy list filters (`GET /api/v1/prophecies`)
-- `book` (1-5), `character` (case-insensitive contains), `type` (ProphecyType enum), `status` (ProphecyStatus enum)
-- `subject` (substring match on subject_characters JSON), `search` (FTS5 full-text search)
-- `sort_by` (source_book|title|prophecy_type|status|source_character), `sort_order` (asc|desc)
-- `limit` (1-200, default 50), `offset` (default 0)
-- Response: `{"items": [...], "total": N, "limit": N, "offset": N}`
-- Each item includes computed `connection_count`
+## API & Error Format
 
-### Error format
-All errors return: `{"error": {"code": "NOT_FOUND|VALIDATION_ERROR|AI_SERVICE_ERROR|RATE_LIMITED", "message": "..."}}`
+Full endpoint list, query filters, and response shapes live in `dev-docs/spec.md`. Quick orientation: REST under `/api/v1/*`; AI endpoints (`/connections/generate`, `/analyze/fulfillment`, `/predict/*`) are **POST + SSE streams**; `/health` and `/api/v1/graph` are plain GET.
+
+All errors return:
+```json
+{"error": {"code": "NOT_FOUND|VALIDATION_ERROR|AI_SERVICE_ERROR|RATE_LIMITED", "message": "..."}}
+```
 
 ## Code Conventions
 
@@ -147,6 +115,7 @@ All errors return: `{"error": {"code": "NOT_FOUND|VALIDATION_ERROR|AI_SERVICE_ER
 - Two streaming patterns: non-streaming Claude for JSON output (connections, fulfillment) vs `client.messages.stream()` for prose (predictions)
 - Analysis caching: SHA-256 hash of `type:input` → `analysis_cache` table. Check cache before API call, store after. Cache keys differ by type: fulfillment hashes event text, single prediction hashes `prophecy_id:model`, global prediction hashes `sorted_ids:model`
 - Cached results replay as SSE events with same protocol as fresh results — frontend doesn't distinguish
+- Every Claude call is logged to `spend_log` (tokens + cost); `MAX_DAILY_API_SPEND_USD` caps daily spend
 - Freeform text input: sanitize with HTML tag stripping and 500-char limit before passing to AI
 - Dual-input endpoints (e.g., fulfillment): accept `event_description` OR `event_id`, validate in service not router
 - Export endpoint returns `Content-Type: text/markdown` with `Content-Disposition: attachment` for browser download
@@ -154,6 +123,7 @@ All errors return: `{"error": {"code": "NOT_FOUND|VALIDATION_ERROR|AI_SERVICE_ER
 ### Frontend (TypeScript)
 - Chakra UI **v3.34** — uses `ChakraProvider` + custom `system` from `createSystem(defaultConfig, config)`, NOT `Provider` or `extendTheme`
 - Compound component pattern for Drawer, Table, Alert, Select (e.g., `DrawerRoot` / `DrawerContent` / `DrawerTrigger`, `Table.Root` / `Table.Header` / `Table.Row`)
+- Import `API_BASE` from `src/config.ts` — never read `import.meta.env.VITE_API_URL` directly (config strips trailing slashes)
 - TypeScript interfaces in `src/types/index.ts` must mirror backend models — `ProphecyListItem` (with connection_count) and `ProphecyDetail` (with connections array) extend base `Prophecy`
 - Filter state lives in URL search params (`useSearchParams`), NOT React state — enables bookmarking, sharing, browser back/forward
 - Always use `{ replace: true }` when setting search params to avoid polluting browser history
@@ -187,20 +157,20 @@ All errors return: `{"error": {"code": "NOT_FOUND|VALIDATION_ERROR|AI_SERVICE_ER
 
 ## Seed Data
 
-- **75 prophecies** covering all 9 types, all 5 statuses, all 5 books
-- **23 canonical events** covering all 5 books
+- **75 prophecies** (all 9 types, 5 statuses, 5 books) + **23 canonical events** (all 5 books)
 - Loaded from `backend/app/seed/*.json` on first boot (idempotent — skips if tables have data)
 - FTS5 index populated after prophecy seeding
-- To re-seed: delete `data/weirwood.db` and restart the backend
+- To re-seed: `make db-reset` (deletes `data/weirwood.db` and restarts the backend). The loader skips if tables already have data, so the delete is mandatory after editing seed JSON.
 
 ## Gotchas
 
 - `greenlet` is a required dependency for async SQLAlchemy — without it, `init_db()` crashes at runtime with a confusing `ValueError`
 - Chakra UI v3.34 uses `ChakraProvider` (not `Provider`) — wrong name causes blank page with console-only module import error
 - Chakra UI v3 online examples are often v2 syntax — always verify compound component patterns (e.g., `DrawerRoot` not `Drawer`, `open` not `isOpen`, `onOpenChange` not `onClose`)
-- `uv init` generates boilerplate files (`hello.py`, `README.md`) — remove them
 - The backend creates `data/weirwood.db` on first startup via the FastAPI lifespan handler
 - Port 5173 (frontend) and 8000 (backend) must be free before running Docker or local dev
+- Railway sets `$PORT` at runtime — the start command must bind it (`--port ${PORT:-8000}`), not a hardcoded port, or the healthcheck fails
+- `VITE_API_URL` with a trailing slash produces `host//api/...` 404s — `src/config.ts` strips it defensively
 - FTS5 index is not auto-synced — if prophecy data changes after seed, the FTS table must be manually updated
 - `select(Model, computed_col)` returns tuples `(Model, value)`, not enriched model instances — unpack with `row[0]`, `row[1]`
 - Searching JSON array columns: use `literal_column("col_name").like(...)` not `Model.col` (avoids SQLAlchemy JSON operator conflicts)
@@ -209,79 +179,27 @@ All errors return: `{"error": {"code": "NOT_FOUND|VALIDATION_ERROR|AI_SERVICE_ER
 - When passing object options to custom hooks (like `useSSE`), wrap in `useMemo` to prevent infinite re-renders from reference changes
 - `EventSource` API only supports GET — our SSE endpoints need POST with JSON body, so we use `fetch` + `ReadableStream.getReader()` instead
 - `AnimatePresence` from framer-motion 12 crashes with React 19 (invalid hook call) — use `motion.div` with `key` prop for entrance-only animations instead
-- Seed data: must delete `data/weirwood.db` (or `backend/data/weirwood.db`) to re-seed after changing JSON files — the loader skips if tables have data
-
-## Frontend Component Map
-
-```
-src/
-├── api/
-│   ├── client.ts              # fetchApi<T>() generic client
-│   ├── prophecies.ts          # useProphecies(), useProphecy() hooks
-│   ├── events.ts              # useEvents() hook
-│   ├── sse.ts                 # SSE event parser (parseSSEEvents)
-│   └── graph.ts               # useGraphData() hook for graph endpoint
-├── components/
-│   ├── layout/
-│   │   ├── Navbar.tsx         # Sticky nav with links + mobile drawer
-│   │   └── Layout.tsx         # Navbar + Outlet wrapper
-│   ├── shared/
-│   │   ├── StatusBadge.tsx    # Color-coded prophecy status
-│   │   ├── TypeIcon.tsx       # Emoji + label for prophecy type
-│   │   ├── BookBadge.tsx      # AGOT/ACOK/ASOS/AFFC/ADWD badge
-│   │   ├── ConfidenceBadge.tsx # 0-100% colored badge
-│   │   └── StreamingText.tsx  # Text with blinking cursor during AI streaming
-│   ├── prophecy/
-│   │   ├── SearchInput.tsx    # Debounced FTS search → URL param
-│   │   ├── FilterBar.tsx      # Book/type/status/character dropdowns
-│   │   ├── ProphecyCard.tsx   # Single card in grid view
-│   │   ├── ProphecyCardGrid.tsx # Responsive 3-col card grid
-│   │   ├── ProphecyTable.tsx  # Sortable table view
-│   │   └── Pagination.tsx     # Previous/Next with "Showing X-Y of Z"
-│   ├── connections/
-│   │   ├── ConnectionCard.tsx # AI-generated connection with type badge + evidence
-│   │   └── SpokeGraph.tsx     # Static radial SVG graph for detail page
-│   └── graph/
-│       ├── ForceGraph.tsx     # D3 force-directed network graph
-│       ├── GraphControls.tsx  # Filter dropdowns + confidence slider
-│       ├── GraphLegend.tsx    # Visual encoding reference (colors, sizes)
-│       └── scales.ts         # D3 color/size/opacity scale functions
-├── pages/
-│   ├── Dashboard.tsx          # Main browse page (assembles all above)
-│   ├── ProphecyDetail.tsx     # Full view + ConnectionsPanel + PredictionPanel + Export
-│   ├── GraphExplorer.tsx      # D3 force graph + controls + legend + mobile list fallback
-│   ├── FulfillmentAnalyzer.tsx # Event input + pre-seeded chips + SSE match cards
-│   ├── TWOWPredictions.tsx    # Per-prophecy + global report with token streaming
-│   └── About.tsx              # Portfolio page: tech stack, skills table, architecture, credits
-├── hooks/
-│   ├── useDebounce.ts         # Generic debounce hook
-│   └── useSSE.ts              # SSE stream consumer (fetch + ReadableStream)
-├── theme/
-│   └── index.ts               # Custom Chakra system with weirwood tokens
-└── types/
-    └── index.ts               # All TS interfaces (Prophecy, Connection, etc.)
-```
 
 ## Environment Variables
 
-All defined in `backend/app/config.py`, with defaults. Copy `.env.example` to `.env`:
+Defined with defaults in `backend/app/config.py` (read from `.env`). Key ones:
 
 | Variable | Default | Required |
 |----------|---------|----------|
-| `ANTHROPIC_API_KEY` | `""` | Yes (for AI features, Phase 4+) |
-| `DATABASE_URL` | `sqlite+aiosqlite:///./data/weirwood.db` | No |
-| `CLAUDE_MODEL` | `claude-sonnet-4-20250514` | No |
-| `CORS_ORIGINS` | `["http://localhost:5173"]` | No |
-| `RATE_LIMIT_PER_MINUTE` | `10` | No |
+| `ANTHROPIC_API_KEY` | `""` | **Yes** (for AI features) |
+| `CLAUDE_MODEL` | `claude-sonnet-4-6` | No |
+| `CORS_ORIGINS` | `["http://localhost:5173"]` | No (add prod origin when deployed) |
 | `MAX_DAILY_API_SPEND_USD` | `5.0` | No |
-| `LOG_LEVEL` | `INFO` | No |
 
-## Database Schema (4 tables + 1 virtual)
+Also: `DATABASE_URL`, `RATE_LIMIT_PER_MINUTE`, `LOG_LEVEL` — see `config.py` for full list and defaults. Frontend reads `VITE_API_URL` (build-time).
 
-- **prophecies** — Core prophecy entries with type, status, source info, JSON arrays for characters/keywords
-- **connections** — AI-generated links between prophecies with type, confidence, evidence (unique on source+target+type)
+## Database Schema (5 tables + 1 virtual)
+
+Defined in `backend/app/models/`, auto-created on backend startup.
+
+- **prophecies** — Core entries: type, status, source info, JSON arrays for characters/keywords
+- **connections** — AI-generated links between prophecies: type, confidence, evidence (unique on source+target+type)
 - **events** — Pre-seeded canonical events for the fulfillment analyzer
 - **analysis_cache** — Cached AI analysis results keyed by input hash (unique on type+hash)
+- **spend_log** — Per-call Claude API usage (endpoint, model, tokens, `cost_usd`); backs `make spend` and the daily-spend cap
 - **prophecies_fts** — FTS5 virtual table indexing prophecy title, description, notes for full-text search
-
-Tables are auto-created on backend startup. See `backend/app/models/` for full definitions.
